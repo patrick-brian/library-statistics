@@ -139,6 +139,14 @@ function handleFileUpload(event) {
             gateCountTable = createTable(gateCountHeaders, gateCountData, '#gate-count-data-table');
 			inquiryTable = createTable(typeOfInquiryDataHeaders, typeOfInquiryData, '#type-of-inquiry-data-table');
 
+            // Select all elements with the class 'my-class'
+            var elements = document.getElementsByClassName('table-wrapper');
+
+            // Loop through the elements and set the background color to white
+            for (var i = 0; i < elements.length; i++) {
+                elements[i].style.backgroundColor = 'white';
+            }
+
         };
         reader.readAsBinaryString(file);
     }
@@ -149,8 +157,6 @@ function displayList(data, tableName) {
     // Extract the headers (first row)
     const headers = data[0];
     //console.log(headers)
-
-
 
 	handleDuplicates(headers)
 	const allData = [{}];
@@ -190,7 +196,7 @@ function createTable(headers, data, tableName, dataTable, editable){
                 searching: (tableName === '#gate-count-data-table') ? false : true,
                 order:{name: "Submission ID", dir: "asc"},
                 pageLength: 100,
-                scrollX: true,
+                scrollX: false,
                 scrollY: 450,
                 paging: true,
                 columns: tableColumns,
@@ -854,9 +860,30 @@ function changeContent(module) {
 // Load the 'gate-count-module' content immediately on page load
 window.onload = function() {
   changeContent('module2');
+  const gateCountTab = document.getElementById('gateCountTab');
+  setActiveTab(gateCountTab); // Set the second tab as active by default
 };
 
 // Function to trigger the file input dialog
 function triggerFileInput() {
   document.getElementById("excel-upload").click();
 }
+
+// Function to toggle the active class when a tab is clicked
+function setActiveTab(selectedTab) {
+  // Remove active class from all tabs
+  const tabs = document.querySelectorAll('.side-tab ul li');
+  tabs.forEach(tab => {
+    tab.classList.remove('active');
+  });
+
+  // Add active class to the clicked tab
+  selectedTab.classList.add('active');
+}
+
+// Modify the onClick handlers in the HTML to trigger the active class change
+document.querySelectorAll('.side-tab ul li').forEach(tab => {
+  tab.addEventListener('click', function() {
+    setActiveTab(tab);
+  });
+});

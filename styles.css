@@ -1,48 +1,37 @@
 /* General styling for the body */
 body {
-  font-family: Arial, sans-serif;
-  margin-left: 270px; /* Adjusted for the width of the side tab and some space */
+  font-family: "Open Sans", sans-serif;
+  font-size: 0.98em;
+  margin-left: 250px; /* Adjusted for the width of the side tab and some space */
   background-color: #f0f0f0; /* Light background for the main page */
   transition: margin-left 0.3s ease; /* Smooth transition for content */
 }
 
 /* Style for the side tab */
 .side-tab {
-  height: 92vh;
-  width: 230px; /* Fixed width */
+  height: 96%;
+  width: 200px; /* Fixed width */
   position: fixed;
   left: 0;
   background-color: white;
   color: #4A90E2; /* Warm blue color */
   overflow-x: hidden;
-  padding-top: 60px;
-  border-radius: 12px; /* Rounded corners */
+  padding: 20px 13px 0px 13px;
+  border-radius: 5px; /* Rounded corners */
   box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for a floating effect */
-  z-index: 1000;
-  margin-left: 20px; /* Detached from the left screen */
-  text-align: center; /* Center the content horizontally */
-
+  margin-left: 10px; /* Detached from the left screen */
 }
 
 /* Styling for the side tab heading */
 .side-tab h2 {
   font-size: 24px;
   color: #4A90E2; /* Warm blue color */
-  margin-bottom: 20px;
 }
 
 /* Styling for the module list */
 .side-tab ul {
   list-style-type: none;
   padding: 0;
-}
-
-.side-tab li {
-  font-size: 18px;
-  color: #4A90E2; /* Warm blue color */
-  padding: 10px 0;
-  transition: 0.3s;
-  cursor: pointer; /* Add a pointer cursor to indicate interactivity */
 }
 
 /* Hover effect for list items (highlight) */
@@ -52,29 +41,37 @@ body {
   border-radius: 5px; /* Slight rounding on hover for a smoother look */
 }
 
-/* Styling for the close button */
-.side-tab .close-btn {
-  font-size: 36px;
-  color: #4A90E2; /* Warm blue color */
-  position: absolute;
-  top: 0;
-  right: 10px;
-  cursor: pointer;
-}
-
 /* Hover effect for close button */
 .side-tab .close-btn:hover {
   color: #3B7BBF; /* Darker blue for hover effect */
 }
 
+/* Default style for the list items */
+.side-tab ul li {
+  color: black; /* Default font color */
+  background-color: transparent; /* Default background */
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+/* When a tab is selected (active) */
+.side-tab ul li.active {
+  color: white; /* Font color turns white */
+  background-color: #006ac3; /* Background turns blue */
+  border-radius: 8px; /* Slight rounding on hover for a smoother look */
+
+}
+
+/* Optional: Add some transition effects for smooth changes */
+.side-tab ul li {
+  transition: all 0.3s ease;
+}
+
 /* Content area for the modules */
 #content-area {
   margin-left: 0px; /* Space for the side tab */
-  padding: 20px;
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.1);
-  height: 94vh;
+  border-radius: 5px;
+  height: 100%;
 }
 
 /* Styling for the content in each module */
