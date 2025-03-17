@@ -1,0 +1,85 @@
+/* General styling for the body */
+body {
+  font-family: Arial, sans-serif;
+  margin-left: 270px; /* Adjusted for the width of the side tab and some space */
+  background-color: #f0f0f0; /* Light background for the main page */
+  transition: margin-left 0.3s ease; /* Smooth transition for content */
+}
+
+/* Style for the side tab */
+.side-tab {
+  height: 92vh;
+  width: 250px; /* Fixed width */
+  position: fixed;
+  left: 0;
+  background-color: white;
+  color: #4A90E2; /* Warm blue color */
+  overflow-x: hidden;
+  padding-top: 60px;
+  border-radius: 12px; /* Rounded corners */
+  box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for a floating effect */
+  z-index: 1000;
+  margin-left: 20px; /* Detached from the left screen */
+  text-align: center; /* Center the content horizontally */
+
+}
+
+/* Styling for the side tab heading */
+.side-tab h2 {
+  font-size: 24px;
+  color: #4A90E2; /* Warm blue color */
+  margin-bottom: 20px;
+}
+
+/* Styling for the module list */
+.side-tab ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.side-tab li {
+  font-size: 18px;
+  color: #4A90E2; /* Warm blue color */
+  padding: 10px 0;
+  transition: 0.3s;
+  cursor: pointer; /* Add a pointer cursor to indicate interactivity */
+}
+
+/* Hover effect for list items (highlight) */
+.side-tab li:hover {
+  background-color: #e3f2fd; /* Light blue background on hover */
+  color: #1e6bb8; /* Darker blue for text color on hover */
+  border-radius: 5px; /* Slight rounding on hover for a smoother look */
+}
+
+/* Styling for the close button */
+.side-tab .close-btn {
+  font-size: 36px;
+  color: #4A90E2; /* Warm blue color */
+  position: absolute;
+  top: 0;
+  right: 10px;
+  cursor: pointer;
+}
+
+/* Hover effect for close button */
+.side-tab .close-btn:hover {
+  color: #3B7BBF; /* Darker blue for hover effect */
+}
+
+/* Content area for the modules */
+#content-area {
+  margin-left: 10px; /* Space for the side tab */
+  padding: 20px;
+  font-size: 20px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.1);
+  height: 94vh;
+  transition: all 0.3s ease;
+}
+
+/* Styling for the content in each module */
+.module-content {
+  display: none; /* Hide all content initially */
+}
