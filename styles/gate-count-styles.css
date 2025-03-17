@@ -1,0 +1,154 @@
+/* Container to hold the cards */
+.card-container {
+  display: flex; /* Flexbox to arrange the cards side by side */
+  gap: 20px; /* Space between the cards */
+  justify-content: center; /* Center the cards horizontally */
+}
+
+/* Card styles */
+.card {
+  width: 400px; /* Wider than tall */
+  height: 150px; /* Adjust the height to make it landscape */
+  background-color: #f4f4f4;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  text-align: center;
+}
+
+.card h3 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.card p {
+  font-size: 1rem;
+}
+
+.input-container {
+    display: flex;
+    align-items: center;
+
+}
+
+label {
+    font-size: 16px;
+}
+
+input[type="number"] {
+    padding: 8px;
+    font-size: 14px;
+    width: 100px;
+    height: 5px;
+    margin-bottom: 10px;
+    -moz-appearance: textfield; /* Hide the spin buttons in Firefox */
+    appearance: textfield; /* Hide the spin buttons in WebKit-based browsers */
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Flex container for aligning buttons */
+.button-container {
+    display: flex;
+    justify-content: space-between;  /* Space between buttons */
+    align-items: center;  /* Vertically align the buttons */
+    margin-bottom: 20px;  /* Add some space below the buttons */
+}
+
+th {
+  background-color: #f4f4f4;
+}
+
+tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Footer input and button styling */
+tfoot {
+    background-color: #f9f9f9;
+}
+
+tfoot th {
+    text-align: right;
+    padding: 10px 0px 6px 10px !important;
+}
+
+
+tfoot td {
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Use flexbox for layout of the input fields and button */
+tfoot input, tfoot button {
+    padding: 5px 10px;
+    margin-right: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+tfoot input {
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    padding: 5px;
+    background-color: transparent;
+    color: inherit;
+    margin-left: 10px;
+	width: 150px;
+}
+
+tfoot button {
+    background-color: #006ac3
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+tfoot button:hover {
+    background-color: #0056b3;
+}
+
+/* Style for the result display in the footer */
+tfoot th:nth-child(3) {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+tfoot input:focus, tfoot button:focus {
+    outline: none;
+}
+
+.highlighted {
+  background-color: #68bbe3 !important; /* Light blue background */
+}
+
+/* Allow horizontal scrolling if the table overflows */
+.table-wrapper {
+    overflow-x: auto;
+    width: 100%;
+}
+
+button {
+  padding: 10px 15px;
+  font-size: 14px;
+  cursor: pointer;
+  background-color:#006ac3;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+    display: inline-block;
+    margin-right: 3px; /* Optional: adds space between buttons */
+
+}

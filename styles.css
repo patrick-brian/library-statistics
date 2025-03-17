@@ -9,7 +9,7 @@ body {
 /* Style for the side tab */
 .side-tab {
   height: 92vh;
-  width: 250px; /* Fixed width */
+  width: 230px; /* Fixed width */
   position: fixed;
   left: 0;
   background-color: white;
@@ -69,17 +69,18 @@ body {
 
 /* Content area for the modules */
 #content-area {
-  margin-left: 10px; /* Space for the side tab */
+  margin-left: 0px; /* Space for the side tab */
   padding: 20px;
-  font-size: 20px;
   background-color: white;
   border-radius: 12px;
   box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.1);
   height: 94vh;
-  transition: all 0.3s ease;
 }
 
 /* Styling for the content in each module */
 .module-content {
   display: none; /* Hide all content initially */
 }
+
+
+
