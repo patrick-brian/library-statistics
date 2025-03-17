@@ -812,7 +812,7 @@ function changeContent(module) {
       content = "<h2>Module 1 Content</h2><p>This is the content for Module 1.</p>";
       break;
     case 'module2':
-      fileToLoad = "modules/gate-count-module.html";
+      fileToLoad = "gate-count-module/gate-count-module.html";
       break;
     case 'module3':
       content = "<h2>Module 3 Content</h2><p>This is the content for Module 3.</p>";
