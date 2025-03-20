@@ -1,7 +1,7 @@
 /* General styling for the body */
 body {
   font-family: "Open Sans", sans-serif;
-  font-size: 0.98em;
+  font-size: 0.943em;
   margin-left: 250px; /* Adjusted for the width of the side tab and some space */
   background-color: #f0f0f0; /* Light background for the main page */
   transition: margin-left 0.3s ease; /* Smooth transition for content */
@@ -78,6 +78,11 @@ body {
 .module-content {
   display: none; /* Hide all content initially */
 }
+
+.dt-column-order {
+    display: none;
+}
+
 
 
 
