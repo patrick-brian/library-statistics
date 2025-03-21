@@ -962,7 +962,6 @@ function setActiveTab(selectedTab) {
         setTimeout(function () {
             createTable(headers, data, tableName);
             if(selectedTab.innerText == "Gate Count") {
-
                 document.getElementById('total-days').value = totalDays;
                 document.getElementById('last-year').value = lastYear;
                 document.getElementById('input1').value = addedGateCount
