@@ -66,7 +66,7 @@ html, body {
 }
 
 .tab-content {
- height: calc(97% - 2px)
+    height: calc(97% - 2px)
 }
 
 .table-wrapper {
@@ -91,18 +91,52 @@ html, body {
 	transition: background-color 0.5s ease; /* Transition for smooth color change */
 	display: flex;
 	flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    font-size: 18px;
     color: black;
-	font-weight: bold;
     position: relative;
 	overflow: hidden;
 }
 
-.card .number {
-    display: inline-block; /* Ensures the number is inline */
-    font-size: 2rem; /* Make numbers larger for effect */
+.card-header {
+    height: 20%;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.5em;
+    margin: 30px 0 10px 0;
+}
+
+.card-content {
+    height: 80%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.first-card-element {
+    width: 50%;
+    height: 100%;
+    display: flex;
+    margin: 10px;
+    align-items: center;
+}
+
+.second-card-element {
+    width: 50%;
+    height: 100%;
+    display: flex;
+    margin: 10px;
+    align-items: center;
+}
+
+.label {
+    width: 50%; /* 30% width for the label */
+    text-align: left; /* Aligns text of label to the left */
+    margin-left: 10px
+}
+
+.input {
+    width: 30%; /* 30% width for the input */
+
+    text-align: center;
 }
 
 button {

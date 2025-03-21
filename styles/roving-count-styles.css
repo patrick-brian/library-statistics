@@ -8,6 +8,6 @@
 
 .card-container {
 	display: flex;
-	height: calc(30% - 5px);
+	height: calc(30% - 3px);
 	border-radius: 5px;
 }

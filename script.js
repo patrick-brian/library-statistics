@@ -686,14 +686,14 @@ function calculateTotals() {
         totalLabAverage = (totalComputerLab/totalDays).toFixed(2)
 
         document.getElementById('gate-count-average').innerHTML =
-            `Average per day: <span class="number"> ${(!isFinite(totalGateCountAverage) || isNaN(totalGateCountAverage)) ? "0" : totalGateCountAverage}</span>`;
+            `<span class="number input"> ${(!isFinite(totalGateCountAverage) || isNaN(totalGateCountAverage)) ? "0" : totalGateCountAverage}</span>`;
         document.getElementById('computer-lab-average').innerHTML =
-            `Average per day: <span class="number">  ${(!isFinite(totalLabAverage) || isNaN(totalLabAverage)) ? "0" : totalLabAverage}</span>`;
+            `<span class="number input">  ${(!isFinite(totalLabAverage) || isNaN(totalLabAverage)) ? "0" : totalLabAverage}</span>`;
 
         let changePercentage = (((totalGateCount/lastYear)-1)*100).toFixed(2)
         changeText = `${(!isFinite(changePercentage) || isNaN(changePercentage)) ? "0" : Math.abs(changePercentage)}%` +
                      (lastYear > 0 ? ` ${changePercentage < 0 ? changeColor('decrease') : changeColor('increase')}` : '');
-        document.getElementById('overallCount').innerHTML = `Increase / Decrease: ${changeText}`;
+        document.getElementById('overallCount').innerHTML = changeText;
     }
 }
 
@@ -718,7 +718,7 @@ function rollNumber(elementId, targetNumber) {
         let counter = 0;
         const rollInterval = setInterval(() => {
             // Randomize a number between 1 and 100
-            numberElement.textContent = Math.floor(targetNumber) + 1;
+            numberElement.textContent = targetNumber;
             counter++;
 
             // After showing numbers for a set number of intervals, stop the slot machine
@@ -726,7 +726,7 @@ function rollNumber(elementId, targetNumber) {
                 clearInterval(rollInterval);
 
                 // Show the final random number after stopping
-                const randomNumber = Math.floor(targetNumber) + 1;
+                const randomNumber = targetNumber;
                 numberElement.textContent = randomNumber;
             }
         }, 50); // Interval between number changes (100ms for fast "spinning")
