@@ -167,7 +167,7 @@ function createTable(headers, data, tableName){
         searching: true,
         pageLength: 100,
         scrollX: false,
-        scrollY: 450,
+        scrollY: (tableName === '#roving-data-table') ? 215 : 500,
         paging: true,
         columns: tableColumns,
         columnDefs: [{
@@ -317,7 +317,8 @@ function deleteRow(cancelButton, tableName, rowIndex) {
         let submissionID = row.cells[0].textContent;
         const indexToDelete = deleteData.findIndex(item => item["Submission ID"] === Number(submissionID));
         if (tableName === '#gate-count-data-table') {
-            if(indexToDelete < deleteData.length - 1) {
+
+            if(indexToDelete < deleteData.length - 1 && indexToDelete > 0) {
                 deleteData[indexToDelete+1]["Gate Count - Daily Total"] = deleteData[indexToDelete -1]["Gate Count:"] - deleteData[indexToDelete+1]["Gate Count:"]
                 deleteData[indexToDelete+1]["Gate Count - Unique Head Count"] = deleteData[indexToDelete +1]["Gate Count - Daily Total"]/2
                 deleteData[indexToDelete+1]["Computer Lab - Daily Total"] = deleteData[indexToDelete - 1]["Computer Lab"] - deleteData[indexToDelete+1]["Computer Lab"]
@@ -674,8 +675,8 @@ function calculateTotals() {
             totalComputerLab = Number(totalComputerLab) + Number(item["Computer Lab - Unique Head Count"]); // Sum the profit
         });
 
-        document.getElementById('gate-count-total').innerHTML = `Total Unique Head Count: ${totalGateCount}`;
-        document.getElementById('computer-lab-total').innerHTML = `Total Unique Head Count: ${totalComputerLab}`;
+        document.getElementById('gateNumber').innerHTML = rollNumber("gateNumber", totalGateCount);
+        document.getElementById('computerNumber').innerHTML = rollNumber("computerNumber", totalComputerLab);
 
         totalDays = document.getElementById('total-days').value;
         lastYear = document.getElementById('last-year').value;
@@ -685,17 +686,53 @@ function calculateTotals() {
         totalLabAverage = (totalComputerLab/totalDays).toFixed(2)
 
         document.getElementById('gate-count-average').innerHTML =
-            `Average per day: ${(!isFinite(totalGateCountAverage) || isNaN(totalGateCountAverage)) ? "0" : totalGateCountAverage}`;
+            `Average per day: <span class="number"> ${(!isFinite(totalGateCountAverage) || isNaN(totalGateCountAverage)) ? "0" : totalGateCountAverage}</span>`;
         document.getElementById('computer-lab-average').innerHTML =
-            `Average per day: ${(!isFinite(totalLabAverage) || isNaN(totalLabAverage)) ? "0" : totalLabAverage}`;
+            `Average per day: <span class="number">  ${(!isFinite(totalLabAverage) || isNaN(totalLabAverage)) ? "0" : totalLabAverage}</span>`;
 
         let changePercentage = (((totalGateCount/lastYear)-1)*100).toFixed(2)
         changeText = `${(!isFinite(changePercentage) || isNaN(changePercentage)) ? "0" : Math.abs(changePercentage)}%` +
-                     (lastYear > 0 ? ` ${changePercentage < 0 ? 'decrease' : 'increase'}` : '');
+                     (lastYear > 0 ? ` ${changePercentage < 0 ? changeColor('decrease') : changeColor('increase')}` : '');
         document.getElementById('overallCount').innerHTML = `Increase / Decrease: ${changeText}`;
     }
 }
 
+function changeColor(status) {
+    let card = document.getElementById("changeCard")
+    if (status === 'decrease') { // warm green (#4CAF50)
+        card.style.backgroundColor = '#F44336'; // warm red (#F44336)
+    } else {
+        card.style.backgroundColor = '#4CAF50'; // warm green (#4CAF50)
+    }
+    return status
+}
+function rollNumber(elementId, targetNumber) {
+    //const cards = document.querySelectorAll('.card');
+    //cards.forEach(card => {
+        const numberElement = document.getElementById(elementId);
+
+        // Add the slot rolling class to trigger the animation
+        void numberElement.offsetWidth; // Trigger reflow to restart animation
+
+        // Function to simulate the slot machine effect
+        let counter = 0;
+        const rollInterval = setInterval(() => {
+            // Randomize a number between 1 and 100
+            numberElement.textContent = Math.floor(targetNumber) + 1;
+            counter++;
+
+            // After showing numbers for a set number of intervals, stop the slot machine
+            if (counter >= 10) { // Number of "spins" before stopping
+                clearInterval(rollInterval);
+
+                // Show the final random number after stopping
+                const randomNumber = Math.floor(targetNumber) + 1;
+                numberElement.textContent = randomNumber;
+            }
+        }, 50); // Interval between number changes (100ms for fast "spinning")
+    //});
+    return targetNumber
+}
 function exportReport() {
     sortByIdAscending(gateCountData)
     sortByIdAscending(rovingData)

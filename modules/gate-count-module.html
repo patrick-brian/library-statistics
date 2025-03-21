@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" >
 </head>
 <body>
-  <div id="gateCount" class="content">
+  <div id="gateCount" class="tab-content">
     <div class="card-container">
       <div class="card">
         <h3>Data</h3>
@@ -23,17 +23,17 @@
       <!-- Card 1 -->
       <div class="card">
         <h3>Gate Count</h3>
-        <p id="gate-count-total">Total Unique Head Count: </p>
+        <p id="gate-count-total">Total Unique Head Count: <span class="number" id="gateNumber"></span></p>
         <p id="gate-count-average">Average per day:  </p>
       </div>
 
       <!-- Card 2 -->
       <div class="card">
         <h3>Computer Lab</h3>
-        <p id="computer-lab-total">Total Unique Head Count: </p>
+        <p id="computer-lab-total">Total Unique Head Count: <span class="number" id="computerNumber"></span></p>
         <p id="computer-lab-average">Average per day:  </p>
       </div>
-      <div class="card">
+      <div class="card" id="changeCard">
         <h3>Year Over Year Comparison</h3>
         <p id="overallCount">Increase / Decrease: </p>
       </div>

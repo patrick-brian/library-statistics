@@ -1,101 +1,13 @@
-table {
-  background-color: white;
-}
-
-th {
-  background-color: white;
-}
-
-tr:nth-child(even) {
-  background-color: #f9f9f9;
-}
-
-tr:hover {
-  background-color: #f1f1f1;
-}
-
-/* Footer input and button styling */
-tfoot {
-    background-color: white;
-}
-
-tfoot th {
-    text-align: right;
-    padding: 10px 0px 6px 10px !important;
-}
-
-
-tfoot td {
-    padding: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-/* Use flexbox for layout of the input fields and button */
-tfoot input, tfoot button {
-    padding: 5px 10px;
-    margin-right: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-tfoot input {
-    border: 1px solid #aaa;
-    border-radius: 3px;
-    padding: 5px;
-    background-color: transparent;
-    color: inherit;
-    margin-left: 10px;
-	width: 150px;
-}
-
-tfoot button {
-    background-color: #006ac3
-    color: white;
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-}
-
-tfoot button:hover {
-    background-color: #0056b3;
-}
-
-/* Style for the result display in the footer */
-tfoot th:nth-child(3) {
-    font-weight: bold;
-    font-size: 16px;
-}
-
-tfoot input:focus, tfoot button:focus {
-    outline: none;
-}
-
-.highlighted {
-  background-color: #68bbe3 !important; /* Light blue background */
-}
-
-/* Allow horizontal scrolling if the table overflows */
 .table-wrapper {
-    overflow-x: auto;
-    background-color: none;
-    margin-top: 20px;
-    height: 100%;
-    border-radius: 5px;
-    padding: 0 10px 32px 10px;
+	height: 40%;
+	border-radius: 5px;
+	box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.5); /* Subtle shadow for a floating effect */
+	margin: 5px;
+	padding: 15px;
 }
 
-button {
-  padding: 10px 15px;
-  font-size: 14px;
-  cursor: pointer;
-  background-color:#006ac3;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  transition: background-color 0.3s;
-    display: inline-block;
-    margin-right: 3px; /* Optional: adds space between buttons */
-
+.card-container {
+	display: flex;
+	height: calc(30% - 5px);
+	border-radius: 5px;
 }
