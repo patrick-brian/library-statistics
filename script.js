@@ -1,6 +1,30 @@
 // Load the 'gate-count-module' content immediately on page load
 window.onload = function() {
+
   setActiveTab(document.getElementById('referencestats')); // Set the second tab as active by default
+  while (currentTime <= 19.5) {
+      let hour = Math.floor(currentTime);
+          let minute = (currentTime % 1 === 0.5) ? '30' : '00';
+          let period = hour < 12 ? 'AM' : 'PM';
+
+          // Convert to 12-hour format and add leading zero for single-digit hours
+          if (hour > 12) hour -= 12;
+          let formattedHour = hour < 10 ? `0${hour}` : `${hour}`; // Add leading zero for single digits
+
+          times.push(`${formattedHour}:${minute} ${period}`);
+          currentTime += 0.5; // Move to next time slot
+  }
+
+  // Loop through the days of the week and time intervals
+  for (let day of days) {
+      for (let time of times) {
+          // Generate a random headcount for each time slot (adjust the range as needed)
+          const headcount = getRandomHeadcount(10, 35);
+
+          // Append the generated data to the list
+          dummyData.push({ day, time, headcount });
+      }
+  }
 };
 
 // Function to handle the file upload and data conversion
@@ -89,6 +113,8 @@ function handleFileUpload(event) {
 			   item["Type of Inquiry:"] == "Roving"
 			)
 
+
+
 			loanableTechData = newData.filter(item =>
 			   item["Type of Inquiry:"] == "Loanable Tech"
 			)
@@ -99,6 +125,7 @@ function handleFileUpload(event) {
 			inquiryTable = createTable(typeOfInquiryDataHeaders, typeOfInquiryData, '#type-of-inquiry-data-table');
         };
         reader.readAsBinaryString(file);
+
     }
 }
 
@@ -162,12 +189,23 @@ function createTable(headers, data, tableName){
         elements[i].style.backgroundColor = 'white';
     }
 
+    let scrollValue;
+
+
+    if (tableName === "#reference-stats-data-table") {
+      scrollValue = 270;
+    } else if (tableName === "#roving-data-table") {
+      scrollValue = 215;
+    } else if (tableName === "#gate-count-data-table") {
+      scrollValue = 500;
+    }
+
 	dataTable = new DataTable(tableName, {
         data: data,
         searching: true,
         pageLength: 100,
         scrollX: false,
-        scrollY: (tableName === '#roving-data-table') ? 215 : 500,
+        scrollY: scrollValue,
         paging: true,
         columns: tableColumns,
         columnDefs: [{
@@ -680,8 +718,6 @@ function calculateTotals() {
 
         totalDays = document.getElementById('total-days').value;
         lastYear = document.getElementById('last-year').value;
-        console.log(totalDays)
-        console.log(lastYear)
         totalGateCountAverage = (totalGateCount/totalDays).toFixed(2)
         totalLabAverage = (totalComputerLab/totalDays).toFixed(2)
 
@@ -828,7 +864,6 @@ function exportReport() {
     [wsRefStats, wsGateCountSummary, wsRoving].forEach(sheet => {
         const headerRow = sheet.getRow(1);
         let maxLength = 0;
-        console.log(headerRow)
         headerRow.eachCell((cell, colNumber) => {
             const value = cell.value ? cell.value.toString() : '';
             maxLength = Math.max(maxLength, value.length);
@@ -920,7 +955,6 @@ function setActiveTab(selectedTab) {
                 headers = gateCountHeaders
                 data = gateCountData
                 tableName = "#gate-count-data-table"
-
                 break;
             case 'Roving Count':
                 fileToLoad = "modules/roving-count-module.html";
@@ -967,8 +1001,15 @@ function setActiveTab(selectedTab) {
                 document.getElementById('input1').value = addedGateCount
                 document.getElementById('input2').value = addedComputerLab
                 calculateTotals()
+            } else if (selectedTab.innerText == "Roving Count") {
+                groupRovingData();
+                generateTable("study-room-chart", computerLabAvgHeadCounts);
+                generateTable("group-table-chart", groupTablesAvgHeadCounts);
+                generateTable("study-carrel-chart", studyCarrelsAvgHeadCounts);
+                generateTable("computer-lab-chart", studyRoomAvgHeadCounts);
+
             }
-        }, 10)
+        }, 50)
         // Remove active class from all tabs
         const tabs = document.querySelectorAll('.side-tab ul li');
         tabs.forEach(tab => {
@@ -991,9 +1032,6 @@ document.querySelectorAll('.side-tab ul li').forEach(tab => {
 });
 
 function removeEditOrAdd(tableName) {
-   console.log(adding)
-   console.log(editing)
-   console.log(tableName)
    if (adding) {
         deleteRow(true, tableName)
         adding = false
@@ -1001,6 +1039,313 @@ function removeEditOrAdd(tableName) {
         cancelEdit(tableName)
         editing = false
    }
+}
+const mainData = [];
+
+function groupRovingData() {
+   rovingData.forEach(item => {
+       item["Roving Time"] = item["Roving Time"] && item["Roving Time"].trim() !== ""
+           ? roundToNearestHalfHour(item["Roving Time"])
+           : roundToNearestHalfHour(item["Submitted"]) ; // Assign an empty string if Submitted is undefined or an empty string
+   });
+   separateHeadCounts(calculateHeadCountByDay())
+}
+
+const computerLabHeadCount = [];
+const groupTablesHeadCount = [];
+const studyCarrelsHeadCount = [];
+const studyRoomHeadCount = [];
+const computerLabAvgHeadCounts = [];
+const groupTablesAvgHeadCounts = [];
+const studyCarrelsAvgHeadCounts = [];
+const studyRoomAvgHeadCounts = [];
+
+function getMin(data) {
+    // Ensure data is not empty
+    if (!data || data.length === 0) {
+        return null; // or return some default value like `Infinity` if needed
+    }
+
+    // Use Math.min with the spread operator to get the minimum value from the array of averages
+    return Math.min(...data.map(item => parseFloat(item.average)));
+}
+
+function getMax(data) {
+    // Ensure data is not empty
+    if (!data || data.length === 0) {
+        return null; // or return some default value like `-Infinity` if needed
+    }
+
+    // Use Math.max with the spread operator to get the maximum value from the array of averages
+    return Math.max(...data.map(item => parseFloat(item.average)));
+}
+
+function calculateHeadCountByDay() {
+     // Days of the week array
+     const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+     // Initialize an object to store headcount data grouped by day and time
+     const headCountByDayAndTime = {};
+
+     // Iterate through rovingData and calculate headcount based on day of the week and rounded time
+     rovingData.forEach(item => {
+         // Convert Roving Time to 24-hour format for proper parsing
+         const rovingTimeFormatted = convertTo24HourFormat(item["Roving Time"]);
+         const rovingDate = new Date(rovingTimeFormatted.replace(",", "")); // Remove comma for proper date parsing
+
+         // Get the day of the week (0-6, 0 = Sunday, 1 = Monday, ...)
+         const dayOfWeek = rovingDate.getDay();
+         const timeRounded = rovingDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+         // Create a key for the combination of day and rounded time
+         const dayTimeKey = `${daysOfWeek[dayOfWeek]} ${timeRounded}`;
+
+
+         // Get the headcounts for each category, assigning 0 if empty, null or empty string
+         const getValidHeadCount = (value) => {
+             return value === null || value === "" || value === undefined ? 0 : value;
+         };
+
+         // Get the headcounts for each category
+         const computerLabCount = getValidHeadCount(item["Computer Lab-"]);
+         const groupTablesCount = getValidHeadCount(item["Group Tables"]);
+         const studyCarrelsCount = getValidHeadCount(item["Study Carrels"]);
+         const studyRoomsCount = getValidHeadCount(item["Study Rooms"]);
+
+         // Add the headcount data to the corresponding day and time slot
+         if (!headCountByDayAndTime[dayTimeKey]) {
+             headCountByDayAndTime[dayTimeKey] = {
+                 computerLabHeadCounts: [],
+                 groupTablesHeadCounts: [],
+                 studyCarrelsHeadCounts: [],
+                 studyRoomHeadCounts: []
+             };
+         }
+
+         headCountByDayAndTime[dayTimeKey].computerLabHeadCounts.push(computerLabCount);
+         headCountByDayAndTime[dayTimeKey].groupTablesHeadCounts.push(groupTablesCount);
+         headCountByDayAndTime[dayTimeKey].studyCarrelsHeadCounts.push(studyCarrelsCount);
+         headCountByDayAndTime[dayTimeKey].studyRoomHeadCounts.push(studyRoomsCount);
+     });
+
+     // Calculate the average headcounts for each day-time combination
+     const calculateAverage = (data) => {
+         return data.map(item => {
+             const avgComputerLab = (item.computerLabHeadCounts.reduce((acc, val) => acc + val, 0) / item.computerLabHeadCounts.length).toFixed(2);
+             const avgGroupTables = (item.groupTablesHeadCounts.reduce((acc, val) => acc + val, 0) / item.groupTablesHeadCounts.length).toFixed(2);
+             const avgStudyCarrels = (item.studyCarrelsHeadCounts.reduce((acc, val) => acc + val, 0) / item.studyCarrelsHeadCounts.length).toFixed(2);
+             const avgStudyRooms = (item.studyRoomHeadCounts.reduce((acc, val) => acc + val, 0) / item.studyRoomHeadCounts.length).toFixed(2);
+
+             // Return the separate fields for day and time along with the averages
+             const [day, time, ampm] = item.dayTime.split(" ");
+             return {
+                 day: day, // Day of the week (e.g., Monday)
+                 time: time + " " + ampm, // Time in "HH:mm" format (e.g., 07:30)
+                 averageComputerLab: avgComputerLab,
+                 averageGroupTables: avgGroupTables,
+                 averageStudyCarrels: avgStudyCarrels,
+                 averageStudyRooms: avgStudyRooms
+             };
+         });
+     };
+
+     const result = Object.keys(headCountByDayAndTime).map(dayTimeKey => ({
+         dayTime: dayTimeKey,
+         ...headCountByDayAndTime[dayTimeKey]
+     }));
+
+
+     return calculateAverage(result);
+}
+
+function addHeadCount(headCountArray, dayOfWeek, headCount) {
+    // Check if the day already exists in the array
+    if (!headCountArray[dayOfWeek]) {
+        // Initialize the day if it doesn't exist
+        headCountArray[dayOfWeek] = { day: dayOfWeek, headCounts: [] };
+    }
+    // Add the headcount for that specific day
+    headCountArray[dayOfWeek].headCounts.push(headCount);
+}
+
+function fixHourFormat(timeString) {
+    const [date, time, period] = timeString.split(" ");
+    let [hours, minutes, seconds] = time.split(":");
+
+    if (period === "p.m." && hours !== "12") {
+        hours = (parseInt(hours) + 12).toString(); // Add 12 to the hour for PM times (except 12 PM)
+    } else if (period === "a.m." && hours === "12") {
+        hours = "00"; // Convert 12 AM to 00 hours
+    }
+
+    return `${date} ${hours}:${minutes}:${seconds}`;
+}
+
+function roundToNearestHalfHour(timeString) {
+    // Split the date and time part
+    let [datePart, timePart] = timeString.split(", ");
+
+    // Parse the time to 24-hour format
+    let [time, period] = timePart.split(" ");
+    let [hour, minute, second] = time.split(":").map(Number);
+
+    // Convert to 24-hour format
+    if (period === "p.m." && hour !== 12) {
+        hour += 12; // Convert PM times to 24-hour format
+    }
+    if (period === "a.m." && hour === 12) {
+        hour = 0; // Midnight case (12:00 AM)
+    }
+
+    // Create a new Date object from the parsed values
+    let date = new Date(`${datePart}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:${second.toString().padStart(2, '0')}`);
+
+    // Get the minutes of the current time
+    let minutes = date.getMinutes();
+
+    // Round the minutes to the nearest 30th minute (either 00 or 30)
+    if (minutes < 15) {
+        date.setMinutes(0, 0, 0); // Round down to the start of the hour
+    } else if (minutes < 45) {
+        date.setMinutes(30, 0, 0); // Round to the 30th minute
+    } else {
+        date.setMinutes(0, 0, 0); // Round up to the next hour
+        date.setHours(date.getHours() + 1); // Increment the hour
+    }
+
+    // Format the date back into the desired string
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    let formattedHour = date.getHours();
+    const formattedMinute = date.getMinutes().toString().padStart(2, '0');
+    const formattedSecond = date.getSeconds().toString().padStart(2, '0');
+    const periodFinal = formattedHour >= 12 ? 'p.m.' : 'a.m.';
+
+    // Convert to 12-hour format
+    formattedHour = formattedHour > 12 ? formattedHour - 12 : (formattedHour === 0 ? 12 : formattedHour);
+
+    // Return the formatted string
+    return `${year}-${month}-${day}, ${formattedHour}:${formattedMinute}:${formattedSecond} ${periodFinal}`;
+}
+
+function separateHeadCounts(data) {
+    // Initialize separate variables for each headcount category
+
+
+    // Iterate over each record in the data
+    data.forEach(item => {
+        // Prepare the object with day, time, and average for each headcount category
+        const dayTimeData = {
+            day: item.day,
+            time: item.time,
+            average: item.averageComputerLab // Starting with averageComputerLab, will handle others similarly
+        };
+
+        // Push each category into its respective array
+        computerLabAvgHeadCounts.push({
+            ...dayTimeData,
+            average: item.averageComputerLab // For computer lab headcount
+        });
+
+        groupTablesAvgHeadCounts.push({
+            ...dayTimeData,
+            average: item.averageGroupTables // For group tables headcount
+        });
+
+        studyCarrelsAvgHeadCounts.push({
+            ...dayTimeData,
+            average: item.averageStudyCarrels // For study carrels headcount
+        });
+
+        studyRoomAvgHeadCounts.push({
+            ...dayTimeData,
+            average: item.averageStudyRooms // For study rooms headcount
+        });
+    });
+
+//    // Return the 4 variables containing the separated data
+//    return {
+//        computerLabAvgHeadCounts,
+//        groupTablesAvgHeadCounts,
+//        studyCarrelsAvgHeadCounts,
+//        studyRoomAvgHeadCounts
+//    };
+}
+
+// Function to generate the table
+function generateTable(tableName, tableData) {
+    console.log(tableData.filter(item => item.day === "Monday"))
+    let tooltip;
+    const table = document.getElementById(tableName);
+    const headerRow = document.createElement('tr');
+
+    // Create the header row with days
+    const blankHeader = document.createElement('th'); // Empty top-left corner cell
+    headerRow.appendChild(blankHeader);
+    days.forEach(day => {
+        const th = document.createElement('th');
+        th.innerText = day;
+        headerRow.appendChild(th);
+    });
+    table.appendChild(headerRow);
+
+
+
+    // Function to calculate the red intensity based on headcount
+    function getRedShade(headcount) {
+        const minHeadcount = getMin(tableData); // Minimum headcount
+        const maxHeadcount = getMax(tableData); // Maximum headcount
+        // Normalize the headcount to a value between 0 and 1
+        const normalized = Math.min(Math.max((headcount - maxHeadcount) / (minHeadcount - maxHeadcount), 0), 1);
+
+        // Calculate the red intensity (255 being the darkest red)
+        const redIntensity = Math.floor(130 + (125 * normalized));
+
+        // Return the background color in RGB format
+        return `rgb(${redIntensity}, 0, 0)`; // Red, no green, no blue
+    }
+
+    // Create rows for each time slot
+    times.forEach(time => {
+        const row = document.createElement('tr');
+        const timeCell = document.createElement('td');
+        timeCell.innerText = time;
+        row.appendChild(timeCell);
+
+        // Create a cell for each day and insert the corresponding headcount
+        days.forEach(day => {
+            const td = document.createElement('td');
+            const cellData = tableData.find(entry => entry.day === day && entry.time === time);
+            if (cellData && cellData.average > 0) {
+                td.innerText = cellData.average;
+                td.style.backgroundColor = getRedShade(cellData.average); // Apply background color
+
+                // Set the tooltip content to show day, time, and headcount
+                td.addEventListener('mouseenter', () => {
+                     // Create a tooltip div (will be used for showing tooltips)
+                    tooltip = document.createElement('div');
+                    tooltip.classList.add('tooltip');
+                    document.body.appendChild(tooltip);
+                    tooltip.innerText = `Day: ${day}\nTime: ${time}\nAverage Headcount: ${cellData.average}`;
+                    tooltip.style.left = `${td.getBoundingClientRect().left}px`;  // Position tooltip horizontally
+                    tooltip.style.top = `${td.getBoundingClientRect().bottom + 5}px`;  // Position tooltip below the cell (5px space)
+                    tooltip.classList.add('visible');  // Show tooltip
+                });
+
+                td.addEventListener('mouseleave', () => {
+                    tooltip.remove();  // Hide tooltip
+                });
+            } else {
+                td.innerText = ''; // If no data, leave empty
+                td.style.backgroundColor = ''; // No background color if no data
+            }
+
+            row.appendChild(td);
+        });
+
+        table.appendChild(row);
+    });
 }
 
 let refStatsHeaders = ['Submission ID', 'Submitted', 'Method of Inquiry:', 'Type of Inquiry:', 'Type of Reference:', 'Type of Facilitative Inquiry:',
@@ -1069,3 +1414,18 @@ let gateCountTable;
 let inquiryTable;
 let currentSearch = "";
 let dataTable;
+
+let days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+// Time slots (7:30 AM to 7:30 PM, in 30-minute intervals)
+let times = [];
+let currentTime = 7.5; // 7:30 AM in 24-hour format
+
+
+let dummyData = [];
+
+
+
+function getRandomHeadcount(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}

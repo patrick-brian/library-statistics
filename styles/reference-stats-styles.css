@@ -1,0 +1,12 @@
+.table-wrapper {
+	height: calc(50% - 5px);
+	border-radius: 5px;
+	box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.5); /* Subtle shadow for a floating effect */
+	padding: 15px;
+}
+
+.card-container {
+	display: flex;
+	height: calc(17% - 3px);
+	border-radius: 5px;
+}

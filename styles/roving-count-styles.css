@@ -1,3 +1,14 @@
+html, body {
+    overflow-x: hidden; /* Hides horizontal scrollbar */
+    overflow-y: hidden;   /* Allows vertical scrolling if needed */
+}
+
+.card-header-chart {
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.5em;
+    margin: 30px 0 18px 0;
+}
 .table-wrapper {
 	height: 40%;
 	border-radius: 5px;
@@ -8,6 +19,69 @@
 
 .card-container {
 	display: flex;
-	height: calc(30% - 3px);
-	border-radius: 5px;
+    height: calc(60% - 5px);
+    border-radius: 5px;
 }
+
+#study-room-chart td:not(:first-child), #study-room-chart tr:not(:first-child) th,
+#group-table-chart td:not(:first-child), #group-table-chart tr:not(:first-child) th,
+#study-carrel-chart td:not(:first-child), #study-carrel-chart tr:not(:first-child) th,
+#computer-lab-chart td:not(:first-child), #computer-lab-chart tr:not(:first-child) th {
+    color: white;
+}
+
+table {
+	width: 100%;
+	border-radius: 5px; /* Rounded corners */
+	border-collapse: collapse;
+	font-size: 0.8em;
+	padding: 5px;
+	text-align: center;
+}
+
+th, td {
+	border: 1px solid black;
+	text-align: center;
+}
+th {
+	border-left: none;
+	border-top: none;
+}
+
+td:first-child {
+	border-left: none;
+	border-top: none;
+
+}
+
+
+/* Remove bottom border of the last row */
+tr:last-child td {
+    border-bottom: none;
+}
+
+/* Remove the right border of the last column */
+td:last-child, th:last-child {
+    border-right: none;
+}
+
+.tooltip {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 5px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    visibility: hidden; /* Hidden by default */
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 1000;
+
+}
+
+/* Tooltip visible when hovered */
+.tooltip.visible {
+    visibility: visible;
+    opacity: 1;
+}
+
