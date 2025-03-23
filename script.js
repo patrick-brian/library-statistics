@@ -1,6 +1,5 @@
 // Load the 'gate-count-module' content immediately on page load
 window.onload = function() {
-
   setActiveTab(document.getElementById('referencestats')); // Set the second tab as active by default
   while (currentTime <= 19.5) {
       let hour = Math.floor(currentTime);
@@ -13,17 +12,6 @@ window.onload = function() {
 
           times.push(`${formattedHour}:${minute} ${period}`);
           currentTime += 0.5; // Move to next time slot
-  }
-
-  // Loop through the days of the week and time intervals
-  for (let day of days) {
-      for (let time of times) {
-          // Generate a random headcount for each time slot (adjust the range as needed)
-          const headcount = getRandomHeadcount(10, 35);
-
-          // Append the generated data to the list
-          dummyData.push({ day, time, headcount });
-      }
   }
 };
 
@@ -50,8 +38,9 @@ function handleFileUpload(event) {
             convertExcelDates(jsonData.slice(1))
 
             // Display the JSON data as a list
-            const newData = displayList(jsonData);
+            const rawData = displayList(jsonData)
 
+            const newData = rawData.flatMap(record => splitRecord(record));
             refStats = newData
                 .map(obj => {
                     // Apply the filter for "Type of Inquiry:" conditions before continuing
@@ -112,8 +101,6 @@ function handleFileUpload(event) {
 			rovingData = newData.filter(item =>
 			   item["Type of Inquiry:"] == "Roving"
 			)
-
-
 
 			loanableTechData = newData.filter(item =>
 			   item["Type of Inquiry:"] == "Loanable Tech"
@@ -413,28 +400,18 @@ function editRow(tableName, rowIndex) {
 
               }
         } else if(tableName == '#reference-stats-data-table') {
+              // Generate options based on the index
               let options = '';
-
               if (index == 3) {
-                options = typeOfInquiry.map(option =>
-                    `<option value="${option}" ${originalText === option ? 'selected' : ''}>${option}</option>`
-                ).join('');
+                options = generateOptions(originalText, typeOfInquiry);
               } else if (index == 4) {
-                options = typeOfReference.map(option =>
-                    `<option value="${option}" ${originalText === option ? 'selected' : ''}>${option}</option>`
-                ).join('');
+                options = generateOptions(originalText, typeOfReference);
               } else if (index == 5) {
-                options = typeOfFacilitativeInquiry.map(option =>
-                    `<option value="${option}" ${originalText === option ? 'selected' : ''}>${option}</option>`
-                ).join('');
+                options = generateOptions(originalText, typeOfFacilitativeInquiry);
               } else if (index == 6) {
-                options = typeOfDigitalSupportInquiry.map(option =>
-                    `<option value="${option}" ${originalText === option ? 'selected' : ''}>${option}</option>`
-                ).join('');
+                options = generateOptions(originalText, typeOfDigitalSupportInquiry);
               } else if (index == 7) {
-                options = technologyType.map(option =>
-                    `<option value="${option}" ${originalText === option ? 'selected' : ''}>${option}</option>`
-                ).join('');
+                options = generateOptions(originalText, technologyType);
               }
 
               if (index == 3 || index == 4 || index == 5 || index == 6 || index == 7) {
@@ -460,6 +437,16 @@ function editRow(tableName, rowIndex) {
     row.querySelector('td:last-child').innerHTML = saveButtonHtml;
     $(tableName).parent().scrollTop(scrollPosition);
 }
+
+// Function to generate options with a placeholder
+function generateOptions(originalText, optionsArray) {
+  return `
+    <option value="" ${!originalText ? 'selected' : ''}></option>
+  ` + optionsArray.map(option =>
+    `<option value="${option}" ${originalText === option ? 'selected' : ''}>${option}</option>`
+  ).join('');
+}
+
 
 function addRow(tableName, rowIndex) {
     removeEditOrAdd(tableName)
@@ -629,6 +616,7 @@ function saveRow(button, rowData, tableName) {
     $(tableName).parent().scrollTop(scrollPosition);
 
     if (tableName === '#gate-count-data-table') calculateTotals();
+    else if(tableName === '#reference-stats-data-table') calculateReference();
 }
 
 // Function to cancel editing and revert the changes
@@ -802,7 +790,7 @@ function exportReport() {
         { header: 'Type of Inquiry:', key: 'Type of Inquiry:'},
         { header: 'Type of Reference:', key: 'Type of Reference:'},
 		{ header: 'Type of Facilitative Inquiry:', key: 'Type of Facilitative Inquiry:'},
-		{ header: 'Type of Digital Support Inquiry:', key: 'Type of Digital Support Inquiry:'},
+		{ header: 'Type of Digital Support Inquiry:', key: 'Type of  Digital Support Inquiry:'},
 		{ header: 'Technology Item Type:', key: 'Technology Item Type:'},
 		{ header: 'Software/Application Type:', key: 'Software/Application Type:'},
 		{ header: "Student's Program", key: "Student's Program"},
@@ -1010,7 +998,7 @@ function setActiveTab(selectedTab) {
                 generateTable("computer-lab-chart", studyRoomAvgHeadCounts);
 
             } else if(selectedTab.innerText == "KC Library Ref Stats") calculateReference()
-        }, 50)
+        }, 100)
         // Remove active class from all tabs
         const tabs = document.querySelectorAll('.side-tab ul li');
         tabs.forEach(tab => {
@@ -1044,12 +1032,14 @@ function removeEditOrAdd(tableName) {
 const mainData = [];
 
 function groupRovingData() {
-   rovingData.forEach(item => {
-       item["Roving Time"] = item["Roving Time"] && item["Roving Time"].trim() !== ""
-           ? roundToNearestHalfHour(item["Roving Time"])
-           : roundToNearestHalfHour(item["Submitted"]) ; // Assign an empty string if Submitted is undefined or an empty string
-   });
-   separateHeadCounts(calculateHeadCountByDay())
+    if (rovingData && rovingData.length > 0) {
+       rovingData.forEach(item => {
+           item["Roving Time"] = item["Roving Time"] && item["Roving Time"].trim() !== ""
+               ? roundToNearestHalfHour(item["Roving Time"])
+               : roundToNearestHalfHour(item["Submitted"]) ; // Assign an empty string if Submitted is undefined or an empty string
+       });
+       separateHeadCounts(calculateHeadCountByDay())
+   }
 }
 
 const computerLabHeadCount = [];
@@ -1264,19 +1254,10 @@ function separateHeadCounts(data) {
             average: item.averageStudyRooms // For study rooms headcount
         });
     });
-
-//    // Return the 4 variables containing the separated data
-//    return {
-//        computerLabAvgHeadCounts,
-//        groupTablesAvgHeadCounts,
-//        studyCarrelsAvgHeadCounts,
-//        studyRoomAvgHeadCounts
-//    };
 }
 
 // Function to generate the table
 function generateTable(tableName, tableData) {
-    console.log(tableData.filter(item => item.day === "Monday"))
     let tooltip;
     const table = document.getElementById(tableName);
     const headerRow = document.createElement('tr');
@@ -1350,72 +1331,114 @@ function generateTable(tableName, tableData) {
 }
 
 function calculateReference() {
+    if (refStats && refStats.length > 0) {
+        document.getElementById("chat-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Chat").length;
+        document.getElementById("in-person-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "In Person").length;
+        document.getElementById("phone-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Phone").length;
+        document.getElementById("email-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Email").length;
+        document.getElementById("form-submission-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Form Submission").length;
 
-    document.getElementById("chat-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Chat").length;
-    document.getElementById("in-person-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "In Person").length;
-    document.getElementById("phone-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Phone").length;
-    document.getElementById("email-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Email").length;
-    document.getElementById("form-submission-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Form Submission").length;
+        document.getElementById("general-library-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "General Library Information (e.g. hours, borrowing period, etc.)").length;
+        document.getElementById("library-account-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Library Account (e.g. pin, renewals, fines, etc.)").length;
+        document.getElementById("referral-external-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Referral/Directional (External - Bookstore, Registrar, Academic Success Centre, etc.)").length;
+        document.getElementById("referral-internal-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Referral/Directional (In Library - BAL, Copyright, EdTech, Instruction, etc.)").length;
+        document.getElementById("community-user-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Community User").length;
+        document.getElementById("supplies-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Supplies (e.g. stapler, pen, hole punch, etc.)").length;
+        document.getElementById("study-room-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Study Room").length;
+        document.getElementById("accessible-format-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Accessible Format Request").length;
+        document.getElementById("reserve-request-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Reserve Request").length;
+        document.getElementById("scan-on-demand-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Scan-On-Demand").length;
+        document.getElementById("inter-library-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Interlibrary Loans/Requests/Holds").length;
+        document.getElementById("facilitative-other-count").innerText = refStats.filter(record =>
+            record["Type of Inquiry:"] === "Facilitative" && !typeOfFacilitativeInquiry.includes(record["Type of Facilitative Inquiry:"])).length;
 
-    document.getElementById("general-library-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "General Library Information (e.g. hours, borrowing period, etc.)").length;
-    document.getElementById("library-account-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Library Account (e.g. pin, renewals, fines, etc.)").length;
-    document.getElementById("referral-external-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Referral/Directional (External - Bookstore, Registrar, Academic Success Centre, etc.)").length;
-    document.getElementById("referral-internal-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Referral/Directional (In Library - BAL, Copyright, EdTech, Instruction, etc.)").length;
-    document.getElementById("community-user-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Community User").length;
-    document.getElementById("supplies-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Supplies (e.g. stapler, pen, hole punch, etc.)").length;
-    document.getElementById("study-room-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Study Room").length;
-    document.getElementById("accessible-format-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Accessible Format Request").length;
-    document.getElementById("reserve-request-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Reserve Request").length;
-    document.getElementById("scan-on-demand-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Scan-On-Demand").length;
-    document.getElementById("inter-library-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Interlibrary Loans/Requests/Holds").length;
-    document.getElementById("facilitative-other-count").innerText = refStats.filter(record =>
-        record["Type of Inquiry:"] === "Facilitative" && !typeOfFacilitativeInquiry.includes(record["Type of Facilitative Inquiry:"])).length;
+        document.getElementById("loanable-tech-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Loanable Tech").length;
+        document.getElementById("digital-support-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Digital Support").length;
+        document.getElementById("basic-reference-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Basic Reference").length;
+        document.getElementById("complex-reference-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Complex Reference").length;
+        document.getElementById("facilitative-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Facilitative").length;
 
-    document.getElementById("loanable-tech-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Loanable Tech").length;
-    document.getElementById("digital-support-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Digital Support").length;
-    document.getElementById("basic-reference-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Basic Reference").length;
-    document.getElementById("complex-reference-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Complex Reference").length;
-    document.getElementById("facilitative-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Facilitative").length;
+        document.getElementById("document-assistance-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Document Assistance (e.g. Microsoft Word, Excel, PDF, Google Docs, etc.)").length;
+        document.getElementById("internet-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Internet/Wifi Connectivity").length;
+        document.getElementById("keyano-account-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Keyano Account Access (e.g. Webmail, Moodle, or Self-Service)").length;
+        document.getElementById("lms-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "LMS (Moodle. McGraw, MyLAB IT)", "Online Navigation (e.g. opening a browser or searching in Google)").length;
+        document.getElementById("print-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Print/Scan/Copy Assistance or Troubleshooting").length;
+        document.getElementById("software-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Software (M365, Respondus, Safe Exam, etc.)").length;
+        document.getElementById("online-navigation-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Online Navigation (e.g. opening a browser or searching in Google)").length;
+        document.getElementById("digital-support-other-count").innerText = refStats.filter(record =>
+           record["Type of Inquiry:"] === "Digital Support" && !typeOfDigitalSupportInquiry.includes(record["Type of  Digital Support Inquiry:"])).length;
 
-    document.getElementById("document-assistance-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Document Assistance (e.g. Microsoft Word, Excel, PDF, Google Docs, etc.)").length;
-    document.getElementById("internet-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Internet/Wifi Connectivity").length;
-    document.getElementById("keyano-account-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Keyano Account Access (e.g. Webmail, Moodle, or Self-Service)").length;
-    document.getElementById("lms-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "LMS (Moodle. McGraw, MyLAB IT)", "Online Navigation (e.g. opening a browser or searching in Google)").length;
-    document.getElementById("print-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Print/Scan/Copy Assistance or Troubleshooting").length;
-    document.getElementById("software-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Software (M365, Respondus, Safe Exam, etc.)").length;
-    document.getElementById("online-navigation-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Online Navigation (e.g. opening a browser or searching in Google)").length;
-    document.getElementById("digital-support-other-count").innerText = refStats.filter(record =>
-       record["Type of Inquiry:"] === "Digital Support" && !typeOfDigitalSupportInquiry.includes(record["Type of  Digital Support Inquiry:"])).length;
+        document.getElementById("citation-help-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Citation Help").length;
+        document.getElementById("find-resource-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Find a Resource (print or online)").length;
+        document.getElementById("database-help-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Database Help").length;
+        document.getElementById("copyright-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Copyright").length;
+        document.getElementById("reference-other-count").innerText = refStats.filter(record =>
+               (record["Type of Inquiry:"] === "Basic Reference" || record["Type of Inquiry:"] === "Complex Reference") && !typeOfReference.includes(record["Type of Reference:"])).length;
 
-    document.getElementById("citation-help-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Citation Help").length;
-    document.getElementById("find-resource-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Find a Resource (print or online)").length;
-    document.getElementById("database-help-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Database Help").length;
-    document.getElementById("copyright-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Copyright").length;
-    document.getElementById("reference-other-count").innerText = refStats.filter(record =>
-           (record["Type of Inquiry:"] === "Basic Reference" || record["Type of Inquiry:"] === "Complex Reference") && !typeOfReference.includes(record["Type of Reference:"])).length;
+        document.getElementById("calculator-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Calculator").length;
+        document.getElementById("camera-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Camera").length;
+        document.getElementById("charger-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Charger, Adapter, etc.").length;
+        document.getElementById("chromebook-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Chromebooks").length;
+        document.getElementById("chromecast-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Chromecast").length;
+        document.getElementById("dvd-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "DVD Player").length;
+        document.getElementById("headphones-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Headphones").length;
+        document.getElementById("keyboard-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Keyboard").length;
+        document.getElementById("laptops-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Laptops").length;
+        document.getElementById("mfa-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "MFA Token").length;
+        document.getElementById("power-bank-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Power Bank").length;
+        document.getElementById("projector-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Projector").length;
+        document.getElementById("sad-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "SAD Light").length;
+        document.getElementById("webcam-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "WebCam").length;
+        document.getElementById("mouse-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "WIreless Mouse").length;
 
-    document.getElementById("calculator-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Calculator").length;
-    document.getElementById("camera-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Camera").length;
-    document.getElementById("charger-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Charger, Adapter, etc.").length;
-    document.getElementById("chromebook-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Chromebooks").length;
-    document.getElementById("chromecast-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Chromecast").length;
-    document.getElementById("dvd-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "DVD Player").length;
-    document.getElementById("headphones-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Headphones").length;
-    document.getElementById("keyboard-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Keyboard").length;
-    document.getElementById("laptops-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Laptops").length;
-    document.getElementById("mfa-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "MFA Token").length;
-    document.getElementById("power-bank-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Power Bank").length;
-    document.getElementById("projector-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Projector").length;
-    document.getElementById("sad-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "SAD Light").length;
-    document.getElementById("webcam-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "WebCam").length;
-    document.getElementById("mouse-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "WIreless Mouse").length;
+        document.getElementById("available-laptop-count").innerText = refStats.filter(record =>
+            record["Technology Item Type:"] === "Laptops" && record["Was Tech available at the time of request?"] === "Yes").length;
+        document.getElementById("unavailable-laptop-count").innerText = refStats.filter(record =>
+                record["Technology Item Type:"] === "Laptops" && record["Was Tech available at the time of request?"] === "No").length;
 
-    document.getElementById("available-laptop-count").innerText = refStats.filter(record =>
-        record["Technology Item Type:"] === "Laptops" && record["Was Tech available at the time of request?"] === "Yes").length;
-    document.getElementById("unavailable-laptop-count").innerText = refStats.filter(record =>
-            record["Technology Item Type:"] === "Laptops" && record["Was Tech available at the time of request?"] === "No").length;
+        document.getElementById("method-inquiry-total").innerText = refStats.filter(record =>
+                methodOfInquiry.includes(record["Method of Inquiry:"])).length;
+        document.getElementById("type-inquiry-total").innerText = refStats.filter(record =>
+                        typeOfInquiry.includes(record["Type of Inquiry:"])).length;
+        document.getElementById("reference-inquiry-total").innerText = refStats.filter(record =>
+            record["Type of Inquiry:"] === "Basic Reference" || record["Type of Inquiry:"] === "Complex Reference").length;
 
+        document.getElementById("facilitative-inquiry-total").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Facilitative").length;
+        document.getElementById("digital-inquiry-total").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Digital Support").length;
+        document.getElementById("loanable-tech-total").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Loanable Tech").length;
+        document.getElementById("laptop-total").innerText = refStats.filter(record => record["Technology Item Type:"] === "Laptops").length;
+    }
 }
+
+function splitRecord(record) {
+  let splitRecords = [record]; // Start with the original record
+
+  // Iterate over each field in the record
+  Object.keys(record).forEach(key => {
+    let value = record[key];
+
+    // Check if the value is a string and contains '|'
+    if (typeof value === 'string' && value.includes('|')) {
+      let values = value.split('|');
+
+      // If there is a split, create new records for each value
+      let tempRecords = [];
+      splitRecords.forEach(existingRecord => {
+        values.forEach(val => {
+          let newRecord = {...existingRecord}; // Clone the existing record
+          newRecord[key] = val; // Assign the split value
+          tempRecords.push(newRecord); // Add the new record to the temp list
+        });
+      });
+
+      splitRecords = tempRecords; // Replace the old records with the new ones
+    }
+  });
+
+  return splitRecords;
+}
+
+
 
 let refStatsHeaders = ['Submission ID', 'Submitted', 'Method of Inquiry:', 'Type of Inquiry:', 'Type of Reference:', 'Type of Facilitative Inquiry:',
                 'Type of  Digital Support Inquiry:', 'Technology Item Type:', 'Software/Application Type:', "Student's Program", 'Year of Program',
@@ -1427,9 +1450,14 @@ let gateCountHeaders = [
     "Computer Lab",  "Computer Lab - Daily Total",  "Computer Lab - Unique Head Count",
      "Subject(s) of Inquiry:", "Additional Information:"]
 
+let methodOfInquiry = [
+    "Chat", "In Person", "Phone", "Email", "Form Submission"
+]
+
 let typeOfInquiryDataHeaders = [
     "Submission ID", "Submitted", "Method of Inquiry:", "Type of Inquiry:", "Type of Facilitative Inquiry:", "Type of  Digital Support Inquiry:", "Type of Reference:", "Additional Information:", "Subject(s) of Inquiry:"
 ]
+
 let rovingHeaders = [
     "Submission ID", "Submitted", "Roving Time", "Method of Inquiry:", "Study Rooms", "Group Tables", "Study Carrels", "Computer Lab-", "Additional Information:", "Subject(s) of Inquiry:"
 ]
@@ -1491,10 +1519,3 @@ let times = [];
 let currentTime = 7.5; // 7:30 AM in 24-hour format
 
 
-let dummyData = [];
-
-
-
-function getRandomHeadcount(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
