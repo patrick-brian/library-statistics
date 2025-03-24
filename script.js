@@ -1026,8 +1026,8 @@ function exportReport() {
             customMergedCell(cell);
         });
 
-    let totalRow21 = wsRefStats.insertRow(lastRow.number + 26, ['', 'Accessible Format', '', '', '', '', '', '', '', '', '']);
-        totalRow21.getCell(3).value = { formula: `COUNTIF(E2:E${lastRow.number}, "Accessible Format")` };
+    let totalRow21 = wsRefStats.insertRow(lastRow.number + 26, ['', 'Accessible Format Request', '', '', '', '', '', '', '', '', '']);
+        totalRow21.getCell(3).value = { formula: `COUNTIF(E2:E${lastRow.number}, "Accessible Format Request")` };
         totalRow21.eachCell((cell, colNumber) => {
             customMergedCell(cell);
         });
