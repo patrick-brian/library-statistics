@@ -40,7 +40,10 @@ function handleFileUpload(event) {
             // Display the JSON data as a list
             const rawData = displayList(jsonData)
 
-            const newData = rawData.flatMap(record => splitRecord(record));
+            const splitData = rawData.flatMap(record => splitRecord(record));
+
+            const newData = processRecords(splitData);
+
             refStats = newData
                 .map(obj => {
                     // Apply the filter for "Type of Inquiry:" conditions before continuing
@@ -159,6 +162,7 @@ function createTable(headers, data, tableName){
     let currentPage = pageInfo !== undefined ? pageInfo.page : 0;
     currentSearch = table.search();
     table.clear().destroy();
+
 	tableColumns = headers.map(
 	    item => ({
             name: item,
@@ -265,12 +269,17 @@ function calculate(){
 	gateCountData[0]["Gate Count - Unique Head Count"] = gateCountData[0]["Gate Count - Daily Total"]/2;
 	gateCountData[0]["Computer Lab - Daily Total"] = addedComputerLab - gateCountData[0]["Computer Lab"];
 	gateCountData[0]["Computer Lab - Unique Head Count"] = gateCountData[0]["Computer Lab - Daily Total"]/2;
+    setTimeout(function() {
+        createTable(gateCountHeaders, gateCountData, tableName);
 
-    createTable(gateCountHeaders, gateCountData, tableName);
-    document.getElementById('input1').value = addedGateCount
-    document.getElementById('input2').value = addedComputerLab
-    $(tableName).parent().scrollTop(scrollPosition);
-    calculateTotals();
+        document.getElementById('input1').value = addedGateCount
+        document.getElementById('input2').value = addedComputerLab
+
+        calculateTotals();
+        $(tableName).parent().scrollTop(scrollPosition);
+        },100)
+
+
 }
 
 function convertExcelDates(list) {
@@ -343,7 +352,6 @@ function deleteRow(cancelButton, tableName, rowIndex) {
         let submissionID = row.cells[0].textContent;
         const indexToDelete = deleteData.findIndex(item => item["Submission ID"] === Number(submissionID));
         if (tableName === '#gate-count-data-table') {
-
             if(indexToDelete < deleteData.length - 1 && indexToDelete > 0) {
                 deleteData[indexToDelete+1]["Gate Count - Daily Total"] = deleteData[indexToDelete -1]["Gate Count:"] - deleteData[indexToDelete+1]["Gate Count:"]
                 deleteData[indexToDelete+1]["Gate Count - Unique Head Count"] = deleteData[indexToDelete +1]["Gate Count - Daily Total"]/2
@@ -355,6 +363,7 @@ function deleteRow(cancelButton, tableName, rowIndex) {
         createTable(headers, deleteData, tableName);
     } else row.classList.remove('highlighted');
 
+    if (tableName === '#roving-data-table') initializeRovingCountPage()
     $(tableName).parent().scrollTop(scrollPosition);
     calculateTotals()
 }
@@ -588,8 +597,7 @@ function saveRow(button, rowData, tableName) {
     if (indexToUpdate !== -1) {
         // Update the found item with the new rowData values
         saveData[indexToUpdate] = { ...saveData[indexToUpdate], ...rowData };
-        if (tableName === '#gate-count-data-table') {
-
+        if (tableName === '#gate-count-data-table' && indexToUpdate > 0) {
             saveData[indexToUpdate]["Gate Count - Daily Total"] = saveData[indexToUpdate - 1]["Gate Count:"] - saveData[indexToUpdate]["Gate Count:"]
             saveData[indexToUpdate]["Gate Count - Unique Head Count"] = saveData[indexToUpdate]["Gate Count - Daily Total"]/2
             saveData[indexToUpdate]["Computer Lab - Daily Total"] = saveData[indexToUpdate - 1]["Computer Lab"] - saveData[indexToUpdate]["Computer Lab"]
@@ -731,6 +739,7 @@ function changeColor(status) {
     }
     return status
 }
+
 function rollNumber(elementId, targetNumber) {
     //const cards = document.querySelectorAll('.card');
     //cards.forEach(card => {
@@ -758,6 +767,7 @@ function rollNumber(elementId, targetNumber) {
     //});
     return targetNumber
 }
+
 function exportReport() {
     sortByIdAscending(gateCountData)
     sortByIdAscending(rovingData)
@@ -800,6 +810,10 @@ function exportReport() {
 		{ header: 'Additional Information:', key: 'Additional Information:'},
     ];
 
+    wsRefStats.columns.forEach(column => {
+          column.width = 17; // Set width to ~115px for each column
+      });
+
 	const refStatsHeaders = ['Submission ID', 'Submitted', 'Method of Inquiry:', 'Type of Inquiry:', 'Type of Reference:', 'Type of Facilitative Inquiry:',
                 'Type of  Digital Support Inquiry:', 'Technology Item Type:', 'Software/Application Type:', "Student's Program", 'Year of Program',
                 'Was Tech available at the time of request?', 'Subject(s) of Inquiry:', 'Additional Information:']
@@ -814,12 +828,18 @@ function exportReport() {
         { header: 'Gate Count', key: 'Gate Count:'},
         { header: 'Daily Total', key: 'Gate Count - Daily Total'},
         { header: 'Unique Head Count (Daily Total/2)', key: 'Gate Count - Unique Head Count'},
+        {},
         { header: 'Computer Lab', key: 'Computer Lab'},
         { header: 'Daily Total', key: 'Computer Lab - Daily Total'},
         { header: 'Unique Head Count (Daily Total/2)', key: 'Computer Lab - Unique Head Count'},
         { header: 'Subject(s) of Inquiry', key: 'Subject(s) of Inquiry:'},
         { header: 'Additional Information', key: 'Additional Information:'}
     ];
+
+    wsGateCountSummary.columns.forEach(column => {
+              column.width = 22; // Set width to ~115px for each column
+          });
+
     gateCountData.forEach(item => {
         wsGateCountSummary.addRow(item);
     });
@@ -836,15 +856,237 @@ function exportReport() {
         { header: 'Subject(s) of Inquiry:', key: 'Subject(s) of Inquiry:'}
     ];
 
+    wsRoving.columns.forEach(column => {
+          column.width = 22; // Set width to ~115px for each column
+      });
+
     exportRoving.forEach(item => {
         wsRoving.addRow(item);
     });
 
-    const lastRow = wsGateCountSummary.lastRow
+    let lastRow = wsRefStats.lastRow
 
-    wsGateCountSummary.insertRow(lastRow.number + 2, ['Date', addedGateCount, '', '', addedComputerLab]);
-    wsGateCountSummary.insertRow(lastRow.number + 5, ['','', 'Total', totalGateCount, '', '', 'Total Lab', totalComputerLab]);
-    wsGateCountSummary.insertRow(lastRow.number + 6, ['','', 'Average per day:', parseFloat(totalGateCountAverage), '', '', 'Average per day', parseFloat(totalLabAverage)]);
+    console.log(lastRow)
+    let totalRow1 = wsRefStats.insertRow(lastRow.number + 6, ['Type of Inquiry', 'Loanable Tech', '', '', 'Type of Reference Inquiry', 'Citation Help', '', '', 'Loanable Tech', 'Calculator', '']);
+        totalRow1.getCell(3).value = { formula: `COUNTIF(C2:C${lastRow.number}, "Loanable Tech")` };
+        totalRow1.getCell(7).value = { formula: `COUNTIF(D2:D${lastRow.number}, "Citation Help")` };
+        totalRow1.getCell(11).value = { formula: `COUNTIF(G2:G${lastRow.number}, "Calculator")` };
+        // Loop through each cell in the inserted row and call customMergedCell(cell) for each
+        totalRow1.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow2 = wsRefStats.insertRow(lastRow.number + 7, ['', 'Digital Support', '', '', '', 'Find a Resource (print or online)', '', '', '', 'Camera', '']);
+        totalRow2.getCell(3).value = { formula: `COUNTIF(C2:C${lastRow.number}, "Digital Support")` };
+        totalRow2.getCell(7).value = { formula: `COUNTIF(D2:D${lastRow.number}, "Find a Resource (print or online)")` };
+        totalRow2.getCell(11).value = { formula: `COUNTIF(G2:G${lastRow.number}, "Camera")` };
+        totalRow2.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow3 = wsRefStats.insertRow(lastRow.number + 8, ['', 'Basic Reference', '', '', '', 'Database Help', '', '', '', 'Charger, Adapter, etc.', '']);
+        totalRow3.getCell(3).value = { formula: `COUNTIF(C2:C${lastRow.number}, "Basic Reference")` };
+        totalRow3.getCell(7).value = { formula: `COUNTIF(D2:D${lastRow.number}, "Database Help")` };
+        totalRow3.getCell(11).value = { formula: `COUNTIF(G2:G${lastRow.number}, "Charger, Adapter, etc.")` };
+        totalRow3.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow4 = wsRefStats.insertRow(lastRow.number + 9, ['', 'Complex Reference', '', '', '', 'Copyright', '', '', '', 'Chromebooks', '']);
+        totalRow4.getCell(3).value = { formula: `COUNTIF(C2:C${lastRow.number}, "Complex Reference")` };
+        totalRow4.getCell(7).value = { formula: `COUNTIF(D2:D${lastRow.number}, "Copyright")` };
+        totalRow4.getCell(11).value = { formula: `COUNTIF(G2:G${lastRow.number}, "Chromebooks")` };
+        totalRow4.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow5 = wsRefStats.insertRow(lastRow.number + 10, ['', 'Facilitative', '', '', '', 'Other', '', '', '', 'Chromecast', '']);
+        totalRow5.getCell(3).value = { formula: `COUNTIF(C2:C${lastRow.number}, "Facilitative")` };
+        totalRow5.getCell(7).value = { formula: `COUNTIF(D2:D${lastRow.number}, "Other")` };
+        totalRow5.getCell(11).value = { formula: `COUNTIF(G2:G${lastRow.number}, "Chromecast")` };
+        totalRow5.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow6 = wsRefStats.insertRow(lastRow.number + 11, ['', '', '', '', '', '', '', '', '', 'DVD Player', '']);
+        totalRow6.getCell(3).value = { formula: `SUM(C${lastRow.number + 6}:C${lastRow.number + 10})` };
+        totalRow6.getCell(7).value = { formula: `SUM(G${lastRow.number + 6}:G${lastRow.number + 10})` };
+        totalRow6.getCell(11).value = { formula: `COUNTIF(G2:G${lastRow.number}, "DVD Player")` };
+        totalRow6.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow7 = wsRefStats.insertRow(lastRow.number + 12, ['Method of Inquiry', 'Chat', '', '', 'Type of Digital Support Inquiry', 'Document Assistance (e.g. Microsoft Word, Excel, PDF, Google Docs, etc.)', '', '', '', 'Headphones', '']);
+        totalRow7.getCell(3).value = { formula: `COUNTIF(B2:B${lastRow.number}, "Chat")` };
+        totalRow7.getCell(7).value = { formula: `COUNTIF(F2:F${lastRow.number}, "Document Assistance (e.g. Microsoft Word, Excel, PDF, Google Docs, etc.)")` };
+        totalRow7.getCell(11).value = { formula: `COUNTIF(G2:G${lastRow.number}, "Headphones")` };
+        totalRow7.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow8 = wsRefStats.insertRow(lastRow.number + 13, ['', 'In Person', '', '', '', 'Internet/Wifi Connectivity', '', '', '', 'Keyboard', '']);
+        totalRow8.getCell(3).value = { formula: `COUNTIF(B2:B${lastRow.number}, "In Person")` };
+        totalRow8.getCell(7).value = { formula: `COUNTIF(F2:F${lastRow.number}, "Internet/Wifi Connectivity")` };
+        totalRow8.getCell(11).value = { formula: `COUNTIF(G2:G${lastRow.number}, "Keyboard")` };
+        totalRow8.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow9 = wsRefStats.insertRow(lastRow.number + 14, ['', 'Phone', '', '', '', 'Keyano Account Access (e.g. Webmail, Moodle, or Self-Service)', '', '', '', 'Laptops', '']);
+        totalRow9.getCell(3).value = { formula: `COUNTIF(B2:B${lastRow.number}, "Phone")` };
+        totalRow9.getCell(7).value = { formula: `COUNTIF(F2:F${lastRow.number}, "Keyano Account Access (e.g. Webmail, Moodle, or Self-Service)")` };
+        totalRow9.getCell(11).value = { formula: `COUNTIF(G2:G${lastRow.number}, "Laptops")` };
+        totalRow9.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow10 = wsRefStats.insertRow(lastRow.number + 15, ['', 'Email', '', '', '', 'LMS (Moodle. McGraw, MyLAB IT)', '', '', '', 'MFA Token', '']);
+        totalRow10.getCell(3).value = { formula: `COUNTIF(B2:B${lastRow.number}, "Email")` };
+        totalRow10.getCell(7).value = { formula: `COUNTIF(F2:F${lastRow.number}, "LMS (Moodle. McGraw, MyLAB IT)")` };
+        totalRow10.getCell(11).value = { formula: `COUNTIF(G2:G${lastRow.number}, "MFA Token")` };
+        totalRow10.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow11 = wsRefStats.insertRow(lastRow.number + 16, ['', 'Form Submission', '', '', '', 'Online Navigation (e.g. opening a browser or searching in Google)', '', '', '', 'Power Bank', '']);
+        totalRow11.getCell(3).value = { formula: `COUNTIF(B2:B${lastRow.number}, "Form Submission")` };
+        totalRow11.getCell(7).value = { formula: `COUNTIF(F2:F${lastRow.number}, "Online Navigation (e.g. opening a browser or searching in Google)")` };
+        totalRow11.getCell(11).value = { formula: `COUNTIF(G2:G${lastRow.number}, "Power Bank")` };
+        totalRow11.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow12 = wsRefStats.insertRow(lastRow.number + 17, ['', '', '', '', '', 'Print/Scan/Copy Assistance or Troubleshooting', '', '', '', 'Projector', '']);
+        totalRow12.getCell(3).value = { formula: `SUM(C${lastRow.number + 12}:C${lastRow.number + 16})` };
+        totalRow12.getCell(7).value = { formula: `COUNTIF(F2:F${lastRow.number}, "Print/Scan/Copy Assistance or Troubleshooting")` };
+        totalRow12.getCell(11).value = { formula: `COUNTIF(G2:G${lastRow.number}, "Projector")` };
+        totalRow12.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow13 = wsRefStats.insertRow(lastRow.number + 18, ['Type of Facilitative Inquiry', 'Interlibrary Loans/Requests/Holds', '', '', '', 'Software (M365, Respondus, Safe Exam, etc.)', '', '', '', 'SAD Light', '']);
+        totalRow13.getCell(3).value = { formula: `COUNTIF(E2:E${lastRow.number}, "Interlibrary Loans/Requests/Holds")` };
+        totalRow13.getCell(7).value = { formula: `COUNTIF(F2:F${lastRow.number}, "Software (M365, Respondus, Safe Exam, etc.)")` };
+        totalRow13.getCell(11).value = { formula: `COUNTIF(G2:G${lastRow.number}, "SAD Light")` };
+        totalRow13.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow14 = wsRefStats.insertRow(lastRow.number + 19, ['', 'General Library Information (e.g. hours, borrowing period, etc.)', '', '', '', 'Other', '', '', '', 'WebCam', '']);
+        totalRow14.getCell(3).value = { formula: `COUNTIF(E2:E${lastRow.number}, "General Library Information (e.g. hours, borrowing period, etc.)")` };
+        totalRow14.getCell(7).value = { formula: `COUNTIF(F2:F${lastRow.number}, "Other")` };
+        totalRow14.getCell(11).value = { formula: `COUNTIF(G2:G${lastRow.number}, "WebCam")` };
+        totalRow14.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow15 = wsRefStats.insertRow(lastRow.number + 20, ['', 'Library Account (e.g. pin, renewals, fines, etc.)', '', '', '', '', '', '', '', 'Wireless Mouse', '']);
+        totalRow15.getCell(3).value = { formula: `COUNTIF(E2:E${lastRow.number}, "Library Account (e.g. pin, renewals, fines, etc.)")` };
+        totalRow15.getCell(7).value = { formula: `SUM(G${lastRow.number + 12}:G${lastRow.number + 19})` };
+        totalRow15.getCell(11).value = { formula: `COUNTIF(G2:G${lastRow.number}, "Wireless Mouse")` };
+        totalRow15.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow16 = wsRefStats.insertRow(lastRow.number + 21, ['', 'Referral/Directional (External - Bookstore, Registrar, Academic Success Centre, etc.)', '', '', 'Laptop Requests:', '', 'Available at time of request:', '', '', '', '']);
+        totalRow16.getCell(3).value = { formula: `COUNTIF(E2:E${lastRow.number}, "Referral/Directional (External - Bookstore, Registrar, Academic Success Centre, etc.)")` };
+        totalRow16.getCell(6).value = { formula: `COUNTIF(G2:G${lastRow.number}, "Laptops")` };
+        totalRow16.getCell(8).value = { formula: `COUNTIFS(G2:G${lastRow.number}, "Laptops", K2:K${lastRow.number}, "Yes")` };
+        totalRow16.getCell(11).value = { formula: `SUM(K${lastRow.number + 6}:K${lastRow.number + 20})` };
+        totalRow16.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow17 = wsRefStats.insertRow(lastRow.number + 22, ['', 'Referral/Directional (In Library - BAL, Copyright, EdTech, Instruction, etc.)', '', '', '', '', 'Unavailable at time of request:', '', '', '', '']);
+        totalRow17.getCell(3).value = { formula: `COUNTIF(E2:E${lastRow.number}, "Referral/Directional (In Library - BAL, Copyright, EdTech, Instruction, etc.)")` };
+        totalRow17.getCell(8).value = { formula: `COUNTIFS(G2:G${lastRow.number}, "Laptops", K2:K${lastRow.number}, "No")` };
+        totalRow17.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow18 = wsRefStats.insertRow(lastRow.number + 23, ['', 'Community User', '', '', '', '', '', '', '', '', '']);
+        totalRow18.getCell(3).value = { formula: `COUNTIF(E2:E${lastRow.number}, "Community User")` };
+        totalRow18.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow19 = wsRefStats.insertRow(lastRow.number + 24, ['', 'Supplies (e.g. stapler, pen, hole punch, etc.)', '', '', '', '', '', '', '', '', '']);
+        totalRow19.getCell(3).value = { formula: `COUNTIF(E2:E${lastRow.number}, "Supplies (e.g. stapler, pen, hole punch, etc.)")` };
+        totalRow19.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow20 = wsRefStats.insertRow(lastRow.number + 25, ['', 'Study Room', '', '', '', '', '', '', '', '', '']);
+        totalRow20.getCell(3).value = { formula: `COUNTIF(E2:E${lastRow.number}, "Study Room")` };
+        totalRow20.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow21 = wsRefStats.insertRow(lastRow.number + 26, ['', 'Accessible Format', '', '', '', '', '', '', '', '', '']);
+        totalRow21.getCell(3).value = { formula: `COUNTIF(E2:E${lastRow.number}, "Accessible Format")` };
+        totalRow21.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow22 = wsRefStats.insertRow(lastRow.number + 27, ['', 'Reserve Request', '', '', '', '', '', '', '', '', '']);
+        totalRow22.getCell(3).value = { formula: `COUNTIF(E2:E${lastRow.number}, "Reserve Request")` };
+        totalRow22.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow23 = wsRefStats.insertRow(lastRow.number + 28, ['', 'Scan-on-Demand', '', '', '', '', '', '', '', '', '']);
+        totalRow23.getCell(3).value = { formula: `COUNTIF(E2:E${lastRow.number}, "Scan-on-Demand")` };
+        totalRow23.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow24 = wsRefStats.insertRow(lastRow.number + 29, ['', 'Other', '', '', '', '', '', '', '', '', '']);
+        totalRow24.getCell(3).value = { formula: `COUNTIF(E2:E${lastRow.number}, "Other")` };
+        totalRow24.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+    let totalRow25 = wsRefStats.insertRow(lastRow.number + 30, ['', '', '', '', '', '', '', '', '', '', '']);
+        totalRow25.getCell(3).value = { formula: `SUM(C${lastRow.number + 18}:C${lastRow.number + 29})` };
+        totalRow25.eachCell((cell, colNumber) => {
+            customMergedCell(cell);
+        });
+
+        wsRefStats.mergeCells(`A${lastRow.number + 6}:A${lastRow.number + 10}`);
+        customMergedCell(wsRefStats.getCell(`A${lastRow.number + 6}`))
+
+        wsRefStats.mergeCells(`A${lastRow.number + 12}:A${lastRow.number + 16}`);
+        customMergedCell(wsRefStats.getCell(`A${lastRow.number + 12}`))
+
+        wsRefStats.mergeCells(`A${lastRow.number + 18}:A${lastRow.number + 29}`);
+        customMergedCell(wsRefStats.getCell(`A${lastRow.number + 18 }`))
+
+        wsRefStats.mergeCells(`E${lastRow.number + 6}:E${lastRow.number + 10}`);
+        customMergedCell(wsRefStats.getCell(`E${lastRow.number + 6}`))
+
+        wsRefStats.mergeCells(`E${lastRow.number + 12}:E${lastRow.number + 19}`);
+        customMergedCell(wsRefStats.getCell(`E${lastRow.number + 12}`))
+
+        wsRefStats.mergeCells(`E${lastRow.number + 21}:E${lastRow.number + 22}`);
+        customMergedCell(wsRefStats.getCell(`E${lastRow.number + 21}`))
+
+        wsRefStats.mergeCells(`F${lastRow.number + 21}:F${lastRow.number + 22}`);
+        customMergedCell(wsRefStats.getCell(`F${lastRow.number + 21}`))
+
+        wsRefStats.mergeCells(`I${lastRow.number + 6}:I${lastRow.number + 20}`);
+        customMergedCell(wsRefStats.getCell(`I${lastRow.number + 6}`))
+
+
+    lastRow = wsGateCountSummary.lastRow
+    wsGateCountSummary.insertRow(lastRow.number + 2, ['Date', addedGateCount, '', '', '', addedComputerLab]);
+    let gateCountTotalRow = wsGateCountSummary.insertRow(lastRow.number + 5, ['','', 'Total', '', '', '', 'Total Lab', totalComputerLab])
+        gateCountTotalRow.getCell(4).value = { formula: 'SUM(D2:D40)' }
+        gateCountTotalRow.getCell(8).value = { formula: 'SUM(H2:H40)' };
+    let gateCountAverageDay = wsGateCountSummary.insertRow(lastRow.number + 6, ['','', 'Average per day:', parseFloat(totalGateCountAverage), '', '', 'Average per day', parseFloat(totalLabAverage)]);
+        gateCountAverageDay.getCell(4).value = { formula: 'D45/' + totalDays };
+        gateCountAverageDay.getCell(4).numFmt = '0.00';
+        gateCountAverageDay.getCell(8).value = { formula: 'H45/' + totalDays };
+        gateCountAverageDay.getCell(8).numFmt = '0.00';
     wsGateCountSummary.insertRow(lastRow.number + 9, ['', '', 'Year Over Year Comparison']);
     wsGateCountSummary.insertRow(lastRow.number + 10, ['','', 'Last year', lastYear]);
     wsGateCountSummary.insertRow(lastRow.number + 11, ['','', 'Increase / Decrease:', changeText]);
@@ -852,21 +1094,11 @@ function exportReport() {
     // Apply styles to the first row (header) for all sheets
     [wsRefStats, wsGateCountSummary, wsRoving].forEach(sheet => {
         const headerRow = sheet.getRow(1);
-        let maxLength = 0;
         headerRow.eachCell((cell, colNumber) => {
             const value = cell.value ? cell.value.toString() : '';
-            maxLength = Math.max(maxLength, value.length);
             cell.font = { bold: true }; // Bold text
             cell.alignment = { horizontal: 'center', vertical: 'middle' }; // Center alignment
             cell.alignment.wrapText = true; // Enable text wrapping
-
-            const column = sheet.getColumn(colNumber);
-                if(maxLength > 30)
-                    column.width = maxLength - 18;
-                else if(maxLength > 15)
-                    column.width = maxLength - 5; // Add padding
-                else
-                    column.width = maxLength + 10
         });
 
         // Enable filter for the header row
@@ -892,7 +1124,7 @@ function exportReport() {
                 column.eachCell({ includeEmpty: true }, (cell, rowNumber) => {
                     if (rowNumber > 1) {  // Exclude the header row from wrap text
                         cell.alignment = cell.alignment || {}; // Ensure alignment object exists
-                        cell.alignment.wrapText = true;  // Enable wrap text for non-header rows
+                        //cell.alignment.wrapText = true;  // Enable wrap text for non-header rows
                     }
                 });
             }
@@ -908,6 +1140,75 @@ function exportReport() {
         link.download = 'raw_data.xlsx';
         link.click();
     });
+
+    sortByIdDescending(gateCountData)
+    sortByIdDescending(rovingData)
+    sortByIdDescending(refStats)
+}
+
+function customMergedCell(mergedCell) {
+
+    if(mergedCell.value !== '' && !mergedCell.value.formula?.includes("SUM")) {
+        mergedCell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+        };
+    }
+
+    if (mergedCell.value !== '') {
+        mergedCell.alignment = {
+          horizontal: 'center', // Horizontal alignment
+          vertical: 'middle',   // Vertical alignment
+        };
+    }
+
+    if (mergedCell.value.formula?.includes("SUM")) {
+        mergedCell.alignment = {
+            vertical: 'top',  // Align text to the top
+        };
+
+        mergedCell.font = {
+            italic: true,        // Make the text italic
+            color: { argb: '808080' },  // Set font color to #808080 (gray)
+        };
+    }
+
+
+    if (!mergedCell.value.formula && mergedCell.value !== '') {
+        mergedCell.alignment.wrapText = true
+
+        mergedCell.font = {
+            bold: true           // Make the text bold
+        };
+    }
+
+    if (!mergedCell.value.formula && mergedCell.value &&
+        (mergedCell.value.toLowerCase().includes("time of request") ||
+         mergedCell.value.toLowerCase().includes("laptop request"))) {
+
+        mergedCell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'E2EFDA' }
+        };
+        let nextCell = mergedCell.worksheet.getCell(mergedCell.row, mergedCell.col + 1)
+
+            nextCell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'E2EFDA' }
+          };
+    }
+
+    if (mergedCell.value !== '' && !mergedCell.value.formula?.includes("SUM") && !mergedCell.fill) {
+            mergedCell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFF2CC' }
+            };
+        }
 
 }
 
@@ -984,20 +1285,9 @@ function setActiveTab(selectedTab) {
 
         setTimeout(function () {
             createTable(headers, data, tableName);
-            if(selectedTab.innerText == "Gate Count") {
-                document.getElementById('total-days').value = totalDays;
-                document.getElementById('last-year').value = lastYear;
-                document.getElementById('input1').value = addedGateCount
-                document.getElementById('input2').value = addedComputerLab
-                calculateTotals()
-            } else if (selectedTab.innerText == "Roving Count") {
-                groupRovingData();
-                generateTable("study-room-chart", computerLabAvgHeadCounts);
-                generateTable("group-table-chart", groupTablesAvgHeadCounts);
-                generateTable("study-carrel-chart", studyCarrelsAvgHeadCounts);
-                generateTable("computer-lab-chart", studyRoomAvgHeadCounts);
-
-            } else if(selectedTab.innerText == "KC Library Ref Stats") calculateReference()
+            if(selectedTab.innerText == "Gate Count") initializeGateCountPage()
+            else if (selectedTab.innerText == "Roving Count") initializeRovingCountPage()
+            else if(selectedTab.innerText == "KC Library Ref Stats") calculateReference()
         }, 100)
         // Remove active class from all tabs
         const tabs = document.querySelectorAll('.side-tab ul li');
@@ -1009,6 +1299,24 @@ function setActiveTab(selectedTab) {
         selectedTab.classList.add('active');
 
     }
+}
+
+function initializeGateCountPage() {
+    document.getElementById('total-days').value = totalDays;
+    document.getElementById('last-year').value = lastYear;
+    document.getElementById('input1').value = addedGateCount
+    document.getElementById('input2').value = addedComputerLab
+    calculateTotals()
+}
+
+function initializeRovingCountPage() {
+
+    groupRovingData();
+    generateTable("study-room-chart", computerLabAvgHeadCounts);
+    generateTable("group-table-chart", groupTablesAvgHeadCounts);
+    generateTable("study-carrel-chart", studyCarrelsAvgHeadCounts);
+    generateTable("computer-lab-chart", studyRoomAvgHeadCounts);
+
 }
 
 // Modify the onClick handlers in the HTML to trigger the active class change
@@ -1042,14 +1350,14 @@ function groupRovingData() {
    }
 }
 
-const computerLabHeadCount = [];
-const groupTablesHeadCount = [];
-const studyCarrelsHeadCount = [];
-const studyRoomHeadCount = [];
-const computerLabAvgHeadCounts = [];
-const groupTablesAvgHeadCounts = [];
-const studyCarrelsAvgHeadCounts = [];
-const studyRoomAvgHeadCounts = [];
+let computerLabHeadCount = [];
+let groupTablesHeadCount = [];
+let studyCarrelsHeadCount = [];
+let studyRoomHeadCount = [];
+let computerLabAvgHeadCounts = [];
+let groupTablesAvgHeadCounts = [];
+let studyCarrelsAvgHeadCounts = [];
+let studyRoomAvgHeadCounts = [];
 
 function getMin(data) {
     // Ensure data is not empty
@@ -1221,9 +1529,10 @@ function roundToNearestHalfHour(timeString) {
 }
 
 function separateHeadCounts(data) {
-    // Initialize separate variables for each headcount category
-
-
+    computerLabAvgHeadCounts = [];
+    groupTablesAvgHeadCounts = [];
+    studyCarrelsAvgHeadCounts = [];
+    studyRoomAvgHeadCounts = [];
     // Iterate over each record in the data
     data.forEach(item => {
         // Prepare the object with day, time, and average for each headcount category
@@ -1260,74 +1569,79 @@ function separateHeadCounts(data) {
 function generateTable(tableName, tableData) {
     let tooltip;
     const table = document.getElementById(tableName);
-    const headerRow = document.createElement('tr');
+    if (table) {
+        while (table.firstChild) {
+          table.removeChild(table.firstChild);
+        }
+        const headerRow = document.createElement('tr');
 
-    // Create the header row with days
-    const blankHeader = document.createElement('th'); // Empty top-left corner cell
-    headerRow.appendChild(blankHeader);
-    days.forEach(day => {
-        const th = document.createElement('th');
-        th.innerText = day;
-        headerRow.appendChild(th);
-    });
-    table.appendChild(headerRow);
-
-
-
-    // Function to calculate the red intensity based on headcount
-    function getRedShade(headcount) {
-        const minHeadcount = getMin(tableData); // Minimum headcount
-        const maxHeadcount = getMax(tableData); // Maximum headcount
-        // Normalize the headcount to a value between 0 and 1
-        const normalized = Math.min(Math.max((headcount - maxHeadcount) / (minHeadcount - maxHeadcount), 0), 1);
-
-        // Calculate the red intensity (255 being the darkest red)
-        const redIntensity = Math.floor(130 + (125 * normalized));
-
-        // Return the background color in RGB format
-        return `rgb(${redIntensity}, 0, 0)`; // Red, no green, no blue
-    }
-
-    // Create rows for each time slot
-    times.forEach(time => {
-        const row = document.createElement('tr');
-        const timeCell = document.createElement('td');
-        timeCell.innerText = time;
-        row.appendChild(timeCell);
-
-        // Create a cell for each day and insert the corresponding headcount
+        // Create the header row with days
+        const blankHeader = document.createElement('th'); // Empty top-left corner cell
+        headerRow.appendChild(blankHeader);
         days.forEach(day => {
-            const td = document.createElement('td');
-            const cellData = tableData.find(entry => entry.day === day && entry.time === time);
-            if (cellData && cellData.average > 0) {
-                td.innerText = cellData.average;
-                td.style.backgroundColor = getRedShade(cellData.average); // Apply background color
-
-                // Set the tooltip content to show day, time, and headcount
-                td.addEventListener('mouseenter', () => {
-                     // Create a tooltip div (will be used for showing tooltips)
-                    tooltip = document.createElement('div');
-                    tooltip.classList.add('tooltip');
-                    document.body.appendChild(tooltip);
-                    tooltip.innerText = `Day: ${day}\nTime: ${time}\nAverage Headcount: ${cellData.average}`;
-                    tooltip.style.left = `${td.getBoundingClientRect().left}px`;  // Position tooltip horizontally
-                    tooltip.style.top = `${td.getBoundingClientRect().bottom + 5}px`;  // Position tooltip below the cell (5px space)
-                    tooltip.classList.add('visible');  // Show tooltip
-                });
-
-                td.addEventListener('mouseleave', () => {
-                    tooltip.remove();  // Hide tooltip
-                });
-            } else {
-                td.innerText = ''; // If no data, leave empty
-                td.style.backgroundColor = ''; // No background color if no data
-            }
-
-            row.appendChild(td);
+            const th = document.createElement('th');
+            th.innerText = day;
+            headerRow.appendChild(th);
         });
+        table.appendChild(headerRow);
 
-        table.appendChild(row);
-    });
+
+
+        // Function to calculate the red intensity based on headcount
+        function getRedShade(headcount) {
+            const minHeadcount = getMin(tableData); // Minimum headcount
+            const maxHeadcount = getMax(tableData); // Maximum headcount
+            // Normalize the headcount to a value between 0 and 1
+            const normalized = Math.min(Math.max((headcount - maxHeadcount) / (minHeadcount - maxHeadcount), 0), 1);
+
+            // Calculate the red intensity (255 being the darkest red)
+            const redIntensity = Math.floor(130 + (125 * normalized));
+
+            // Return the background color in RGB format
+            return `rgb(${redIntensity}, 0, 0)`; // Red, no green, no blue
+        }
+
+        // Create rows for each time slot
+        times.forEach(time => {
+            const row = document.createElement('tr');
+            const timeCell = document.createElement('td');
+            timeCell.innerText = time;
+            row.appendChild(timeCell);
+
+            // Create a cell for each day and insert the corresponding headcount
+            days.forEach(day => {
+                const td = document.createElement('td');
+                const cellData = tableData.find(entry => entry.day === day && entry.time === time);
+                if (cellData && cellData.average > 0) {
+                    td.innerText = cellData.average;
+                    td.style.backgroundColor = getRedShade(cellData.average); // Apply background color
+
+                    // Set the tooltip content to show day, time, and headcount
+                    td.addEventListener('mouseenter', () => {
+                         // Create a tooltip div (will be used for showing tooltips)
+                        tooltip = document.createElement('div');
+                        tooltip.classList.add('tooltip');
+                        document.body.appendChild(tooltip);
+                        tooltip.innerText = `Day: ${day}\nTime: ${time}\nAverage Headcount: ${cellData.average}`;
+                        tooltip.style.left = `${td.getBoundingClientRect().left}px`;  // Position tooltip horizontally
+                        tooltip.style.top = `${td.getBoundingClientRect().bottom + 5}px`;  // Position tooltip below the cell (5px space)
+                        tooltip.classList.add('visible');  // Show tooltip
+                    });
+
+                    td.addEventListener('mouseleave', () => {
+                        tooltip.remove();  // Hide tooltip
+                    });
+                } else {
+                    td.innerText = ''; // If no data, leave empty
+                    td.style.backgroundColor = ''; // No background color if no data
+                }
+
+                row.appendChild(td);
+            });
+
+            table.appendChild(row);
+        });
+    }
 }
 
 function calculateReference() {
@@ -1350,7 +1664,7 @@ function calculateReference() {
         document.getElementById("scan-on-demand-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Scan-On-Demand").length;
         document.getElementById("inter-library-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Interlibrary Loans/Requests/Holds").length;
         document.getElementById("facilitative-other-count").innerText = refStats.filter(record =>
-            record["Type of Inquiry:"] === "Facilitative" && !typeOfFacilitativeInquiry.includes(record["Type of Facilitative Inquiry:"])).length;
+            record["Type of Inquiry:"] === "Facilitative" && record["Type of Facilitative Inquiry:"] === "Other").length;
 
         document.getElementById("loanable-tech-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Loanable Tech").length;
         document.getElementById("digital-support-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Digital Support").length;
@@ -1366,14 +1680,14 @@ function calculateReference() {
         document.getElementById("software-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Software (M365, Respondus, Safe Exam, etc.)").length;
         document.getElementById("online-navigation-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Online Navigation (e.g. opening a browser or searching in Google)").length;
         document.getElementById("digital-support-other-count").innerText = refStats.filter(record =>
-           record["Type of Inquiry:"] === "Digital Support" && !typeOfDigitalSupportInquiry.includes(record["Type of  Digital Support Inquiry:"])).length;
+           record["Type of Inquiry:"] === "Digital Support" && record["Type of  Digital Support Inquiry:"] === "Other").length;
 
         document.getElementById("citation-help-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Citation Help").length;
         document.getElementById("find-resource-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Find a Resource (print or online)").length;
         document.getElementById("database-help-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Database Help").length;
         document.getElementById("copyright-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Copyright").length;
         document.getElementById("reference-other-count").innerText = refStats.filter(record =>
-               (record["Type of Inquiry:"] === "Basic Reference" || record["Type of Inquiry:"] === "Complex Reference") && !typeOfReference.includes(record["Type of Reference:"])).length;
+               (record["Type of Inquiry:"] === "Basic Reference" || record["Type of Inquiry:"] === "Complex Reference") && record["Type of Reference:"] === "Other").length;
 
         document.getElementById("calculator-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Calculator").length;
         document.getElementById("camera-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Camera").length;
@@ -1423,11 +1737,17 @@ function splitRecord(record) {
 
       // If there is a split, create new records for each value
       let tempRecords = [];
-      splitRecords.forEach(existingRecord => {
-        values.forEach(val => {
-          let newRecord = {...existingRecord}; // Clone the existing record
+      splitRecords.forEach((existingRecord, index) => {
+        values.forEach((val, i) => {
+          let newRecord = { ...existingRecord }; // Clone the existing record
           newRecord[key] = val; // Assign the split value
-          tempRecords.push(newRecord); // Add the new record to the temp list
+
+          // Increment Submission ID by 0.1 for each new record
+          if (newRecord.hasOwnProperty('Submission ID')) {
+            newRecord['Submission ID'] = parseFloat(existingRecord['Submission ID']) + (i + 1) * 0.1;
+          }
+
+          tempRecords.push(newRecord);
         });
       });
 
@@ -1438,7 +1758,25 @@ function splitRecord(record) {
   return splitRecords;
 }
 
+function processRecords(records) {
+    return records.map(record => {
+        // Function to check and update a field
+        function checkAndUpdateField(fieldName, validList) {
+            let fieldValue = record[fieldName];
+            if (fieldValue && !validList.includes(fieldValue)) {
+                record["Additional Information:"] = (record["Additional Information:"] || "") + " " + fieldValue;
+                record[fieldName] = "Other";
+            }
+        }
 
+        // Process all three fields
+        checkAndUpdateField("Type of Facilitative Inquiry:", typeOfFacilitativeInquiry);
+        checkAndUpdateField("Type of Reference:", typeOfReference);
+        checkAndUpdateField("Type of  Digital Support Inquiry:", typeOfDigitalSupportInquiry);
+
+        return record;
+    });
+}
 
 let refStatsHeaders = ['Submission ID', 'Submitted', 'Method of Inquiry:', 'Type of Inquiry:', 'Type of Reference:', 'Type of Facilitative Inquiry:',
                 'Type of  Digital Support Inquiry:', 'Technology Item Type:', 'Software/Application Type:', "Student's Program", 'Year of Program',
