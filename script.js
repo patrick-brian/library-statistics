@@ -1302,11 +1302,13 @@ function setActiveTab(selectedTab) {
 }
 
 function initializeGateCountPage() {
-    document.getElementById('total-days').value = totalDays;
-    document.getElementById('last-year').value = lastYear;
-    document.getElementById('input1').value = addedGateCount
-    document.getElementById('input2').value = addedComputerLab
-    calculateTotals()
+    if (document.getElementById('total-days') && document.getElementById('last-year') && document.getElementById('input1') && document.getElementById('input2')) {
+        document.getElementById('total-days').value = totalDays;
+        document.getElementById('last-year').value = lastYear;
+        document.getElementById('input1').value = addedGateCount
+        document.getElementById('input2').value = addedComputerLab
+        calculateTotals()
+    }
 }
 
 function initializeRovingCountPage() {
