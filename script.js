@@ -113,7 +113,11 @@ function handleFileUpload(event) {
 			rovingTable = createTable(rovingHeaders, rovingData, '#roving-data-table');
             gateCountTable = createTable(gateCountHeaders, gateCountData, '#gate-count-data-table');
 			inquiryTable = createTable(typeOfInquiryDataHeaders, typeOfInquiryData, '#type-of-inquiry-data-table');
-			calculateReference()
+
+            if (tableName === "#reference-stats-data-table") calculateReference()
+            else if (tableName === "#roving-data-table") initializeRovingCountPage()
+            else if (tableName === "#gate-count-data-table") initializeGateCountPage()
+
         };
         reader.readAsBinaryString(file);
 
@@ -1647,83 +1651,84 @@ function generateTable(tableName, tableData) {
 }
 
 function calculateReference() {
-    if (refStats && refStats.length > 0 && document.getElementById("chat-count").innerText) {
-        document.getElementById("chat-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Chat").length;
-        document.getElementById("in-person-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "In Person").length;
-        document.getElementById("phone-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Phone").length;
-        document.getElementById("email-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Email").length;
-        document.getElementById("form-submission-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Form Submission").length;
+        if (refStats && refStats.length > 0) {
+            document.getElementById("chat-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Chat").length;
+            document.getElementById("in-person-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "In Person").length;
+            document.getElementById("phone-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Phone").length;
+            document.getElementById("email-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Email").length;
+            document.getElementById("form-submission-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Form Submission").length;
 
-        document.getElementById("general-library-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "General Library Information (e.g. hours, borrowing period, etc.)").length;
-        document.getElementById("library-account-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Library Account (e.g. pin, renewals, fines, etc.)").length;
-        document.getElementById("referral-external-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Referral/Directional (External - Bookstore, Registrar, Academic Success Centre, etc.)").length;
-        document.getElementById("referral-internal-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Referral/Directional (In Library - BAL, Copyright, EdTech, Instruction, etc.)").length;
-        document.getElementById("community-user-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Community User").length;
-        document.getElementById("supplies-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Supplies (e.g. stapler, pen, hole punch, etc.)").length;
-        document.getElementById("study-room-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Study Room").length;
-        document.getElementById("accessible-format-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Accessible Format Request").length;
-        document.getElementById("reserve-request-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Reserve Request").length;
-        document.getElementById("scan-on-demand-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Scan-On-Demand").length;
-        document.getElementById("inter-library-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Interlibrary Loans/Requests/Holds").length;
-        document.getElementById("facilitative-other-count").innerText = refStats.filter(record =>
-            record["Type of Inquiry:"] === "Facilitative" && record["Type of Facilitative Inquiry:"] === "Other").length;
+            document.getElementById("general-library-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "General Library Information (e.g. hours, borrowing period, etc.)").length;
+            document.getElementById("library-account-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Library Account (e.g. pin, renewals, fines, etc.)").length;
+            document.getElementById("referral-external-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Referral/Directional (External - Bookstore, Registrar, Academic Success Centre, etc.)").length;
+            document.getElementById("referral-internal-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Referral/Directional (In Library - BAL, Copyright, EdTech, Instruction, etc.)").length;
+            document.getElementById("community-user-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Community User").length;
+            document.getElementById("supplies-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Supplies (e.g. stapler, pen, hole punch, etc.)").length;
+            document.getElementById("study-room-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Study Room").length;
+            document.getElementById("accessible-format-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Accessible Format Request").length;
+            document.getElementById("reserve-request-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Reserve Request").length;
+            document.getElementById("scan-on-demand-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Scan-On-Demand").length;
+            document.getElementById("inter-library-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Interlibrary Loans/Requests/Holds").length;
+            document.getElementById("facilitative-other-count").innerText = refStats.filter(record =>
+                record["Type of Inquiry:"] === "Facilitative" && record["Type of Facilitative Inquiry:"] === "Other").length;
 
-        document.getElementById("loanable-tech-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Loanable Tech").length;
-        document.getElementById("digital-support-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Digital Support").length;
-        document.getElementById("basic-reference-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Basic Reference").length;
-        document.getElementById("complex-reference-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Complex Reference").length;
-        document.getElementById("facilitative-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Facilitative").length;
+            document.getElementById("loanable-tech-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Loanable Tech").length;
+            document.getElementById("digital-support-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Digital Support").length;
+            document.getElementById("basic-reference-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Basic Reference").length;
+            document.getElementById("complex-reference-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Complex Reference").length;
+            document.getElementById("facilitative-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Facilitative").length;
 
-        document.getElementById("document-assistance-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Document Assistance (e.g. Microsoft Word, Excel, PDF, Google Docs, etc.)").length;
-        document.getElementById("internet-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Internet/Wifi Connectivity").length;
-        document.getElementById("keyano-account-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Keyano Account Access (e.g. Webmail, Moodle, or Self-Service)").length;
-        document.getElementById("lms-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "LMS (Moodle. McGraw, MyLAB IT)", "Online Navigation (e.g. opening a browser or searching in Google)").length;
-        document.getElementById("print-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Print/Scan/Copy Assistance or Troubleshooting").length;
-        document.getElementById("software-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Software (M365, Respondus, Safe Exam, etc.)").length;
-        document.getElementById("online-navigation-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Online Navigation (e.g. opening a browser or searching in Google)").length;
-        document.getElementById("digital-support-other-count").innerText = refStats.filter(record =>
-           record["Type of Inquiry:"] === "Digital Support" && record["Type of  Digital Support Inquiry:"] === "Other").length;
+            document.getElementById("document-assistance-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Document Assistance (e.g. Microsoft Word, Excel, PDF, Google Docs, etc.)").length;
+            document.getElementById("internet-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Internet/Wifi Connectivity").length;
+            document.getElementById("keyano-account-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Keyano Account Access (e.g. Webmail, Moodle, or Self-Service)").length;
+            document.getElementById("lms-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "LMS (Moodle. McGraw, MyLAB IT)", "Online Navigation (e.g. opening a browser or searching in Google)").length;
+            document.getElementById("print-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Print/Scan/Copy Assistance or Troubleshooting").length;
+            document.getElementById("software-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Software (M365, Respondus, Safe Exam, etc.)").length;
+            document.getElementById("online-navigation-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Online Navigation (e.g. opening a browser or searching in Google)").length;
+            document.getElementById("digital-support-other-count").innerText = refStats.filter(record =>
+               record["Type of Inquiry:"] === "Digital Support" && record["Type of  Digital Support Inquiry:"] === "Other").length;
 
-        document.getElementById("citation-help-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Citation Help").length;
-        document.getElementById("find-resource-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Find a Resource (print or online)").length;
-        document.getElementById("database-help-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Database Help").length;
-        document.getElementById("copyright-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Copyright").length;
-        document.getElementById("reference-other-count").innerText = refStats.filter(record =>
-               (record["Type of Inquiry:"] === "Basic Reference" || record["Type of Inquiry:"] === "Complex Reference") && record["Type of Reference:"] === "Other").length;
+            document.getElementById("citation-help-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Citation Help").length;
+            document.getElementById("find-resource-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Find a Resource (print or online)").length;
+            document.getElementById("database-help-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Database Help").length;
+            document.getElementById("copyright-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Copyright").length;
+            document.getElementById("reference-other-count").innerText = refStats.filter(record =>
+                   (record["Type of Inquiry:"] === "Basic Reference" || record["Type of Inquiry:"] === "Complex Reference") && record["Type of Reference:"] === "Other").length;
 
-        document.getElementById("calculator-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Calculator").length;
-        document.getElementById("camera-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Camera").length;
-        document.getElementById("charger-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Charger, Adapter, etc.").length;
-        document.getElementById("chromebook-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Chromebooks").length;
-        document.getElementById("chromecast-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Chromecast").length;
-        document.getElementById("dvd-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "DVD Player").length;
-        document.getElementById("headphones-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Headphones").length;
-        document.getElementById("keyboard-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Keyboard").length;
-        document.getElementById("laptops-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Laptops").length;
-        document.getElementById("mfa-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "MFA Token").length;
-        document.getElementById("power-bank-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Power Bank").length;
-        document.getElementById("projector-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Projector").length;
-        document.getElementById("sad-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "SAD Light").length;
-        document.getElementById("webcam-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "WebCam").length;
-        document.getElementById("mouse-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "WIreless Mouse").length;
+            document.getElementById("calculator-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Calculator").length;
+            document.getElementById("camera-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Camera").length;
+            document.getElementById("charger-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Charger, Adapter, etc.").length;
+            document.getElementById("chromebook-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Chromebooks").length;
+            document.getElementById("chromecast-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Chromecast").length;
+            document.getElementById("dvd-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "DVD Player").length;
+            document.getElementById("headphones-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Headphones").length;
+            document.getElementById("keyboard-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Keyboard").length;
+            document.getElementById("laptops-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Laptops").length;
+            document.getElementById("mfa-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "MFA Token").length;
+            document.getElementById("power-bank-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Power Bank").length;
+            document.getElementById("projector-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Projector").length;
+            document.getElementById("sad-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "SAD Light").length;
+            document.getElementById("webcam-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "WebCam").length;
+            document.getElementById("mouse-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "WIreless Mouse").length;
 
-        document.getElementById("available-laptop-count").innerText = refStats.filter(record =>
-            record["Technology Item Type:"] === "Laptops" && record["Was Tech available at the time of request?"] === "Yes").length;
-        document.getElementById("unavailable-laptop-count").innerText = refStats.filter(record =>
-                record["Technology Item Type:"] === "Laptops" && record["Was Tech available at the time of request?"] === "No").length;
+            document.getElementById("available-laptop-count").innerText = refStats.filter(record =>
+                record["Technology Item Type:"] === "Laptops" && record["Was Tech available at the time of request?"] === "Yes").length;
+            document.getElementById("unavailable-laptop-count").innerText = refStats.filter(record =>
+                    record["Technology Item Type:"] === "Laptops" && record["Was Tech available at the time of request?"] === "No").length;
 
-        document.getElementById("method-inquiry-total").innerText = refStats.filter(record =>
-                methodOfInquiry.includes(record["Method of Inquiry:"])).length;
-        document.getElementById("type-inquiry-total").innerText = refStats.filter(record =>
-                        typeOfInquiry.includes(record["Type of Inquiry:"])).length;
-        document.getElementById("reference-inquiry-total").innerText = refStats.filter(record =>
-            record["Type of Inquiry:"] === "Basic Reference" || record["Type of Inquiry:"] === "Complex Reference").length;
+            document.getElementById("method-inquiry-total").innerText = refStats.filter(record =>
+                    methodOfInquiry.includes(record["Method of Inquiry:"])).length;
+            document.getElementById("type-inquiry-total").innerText = refStats.filter(record =>
+                            typeOfInquiry.includes(record["Type of Inquiry:"])).length;
+            document.getElementById("reference-inquiry-total").innerText = refStats.filter(record =>
+                record["Type of Inquiry:"] === "Basic Reference" || record["Type of Inquiry:"] === "Complex Reference").length;
 
-        document.getElementById("facilitative-inquiry-total").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Facilitative").length;
-        document.getElementById("digital-inquiry-total").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Digital Support").length;
-        document.getElementById("loanable-tech-total").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Loanable Tech").length;
-        document.getElementById("laptop-total").innerText = refStats.filter(record => record["Technology Item Type:"] === "Laptops").length;
-    }
+            document.getElementById("facilitative-inquiry-total").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Facilitative").length;
+            document.getElementById("digital-inquiry-total").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Digital Support").length;
+            document.getElementById("loanable-tech-total").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Loanable Tech").length;
+            document.getElementById("laptop-total").innerText = refStats.filter(record => record["Technology Item Type:"] === "Laptops").length;
+        }
+
 }
 
 function splitRecord(record) {
@@ -1858,4 +1863,5 @@ let days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 let times = [];
 let currentTime = 7.5; // 7:30 AM in 24-hour format
 
+let activetab;
 
