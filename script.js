@@ -1647,7 +1647,7 @@ function generateTable(tableName, tableData) {
 }
 
 function calculateReference() {
-    if (refStats && refStats.length > 0) {
+    if (refStats && refStats.length > 0 && document.getElementById("chat-count").innerText) {
         document.getElementById("chat-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Chat").length;
         document.getElementById("in-person-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "In Person").length;
         document.getElementById("phone-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Phone").length;
