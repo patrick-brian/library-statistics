@@ -1,6 +1,6 @@
 // Load the 'gate-count-module' content immediately on page load
 window.onload = function() {
-  setActiveTab(document.getElementById('referencestats')); // Set the second tab as active by default
+  setActiveTab(document.getElementById('dashboard')); // Set the second tab as active by default
   while (currentTime <= 19.5) {
       let hour = Math.floor(currentTime);
           let minute = (currentTime % 1 === 0.5) ? '30' : '00';
@@ -13,6 +13,7 @@ window.onload = function() {
           times.push(`${formattedHour}:${minute} ${period}`);
           currentTime += 0.5; // Move to next time slot
   }
+
 };
 
 // Function to handle the file upload and data conversion
@@ -259,6 +260,9 @@ function createTable(headers, data, tableName){
     dataTable.draw(false);
 
     return dataTable
+}
+
+function sortColumn(index) {
 }
 
 // Handle Calculate button click
@@ -828,21 +832,21 @@ function exportReport() {
     // Create the second worksheet 'Gate Count Summary'
     const wsGateCountSummary = workbook.addWorksheet('Gate Count Summary');
     wsGateCountSummary.columns = [
-        { header: 'Date', key: 'Submitted'},
-        { header: 'Gate Count', key: 'Gate Count:'},
-        { header: 'Daily Total', key: 'Gate Count - Daily Total'},
-        { header: 'Unique Head Count (Daily Total/2)', key: 'Gate Count - Unique Head Count'},
-        {},
-        { header: 'Computer Lab', key: 'Computer Lab'},
-        { header: 'Daily Total', key: 'Computer Lab - Daily Total'},
-        { header: 'Unique Head Count (Daily Total/2)', key: 'Computer Lab - Unique Head Count'},
-        { header: 'Subject(s) of Inquiry', key: 'Subject(s) of Inquiry:'},
-        { header: 'Additional Information', key: 'Additional Information:'}
+        { header: 'Date', key: 'Submitted', width: 22},
+        { header: 'Gate Count', key: 'Gate Count:', width: 11},
+        { header: 'Daily Total', key: 'Gate Count - Daily Total', width: 11},
+        { header: 'Unique Head Count (Daily Total/2)', key: 'Gate Count - Unique Head Count', width: 21},
+        { width: 5},
+        { header: 'Computer Lab', key: 'Computer Lab', width: 11},
+        { header: 'Daily Total', key: 'Computer Lab - Daily Total', width: 11},
+        { header: 'Unique Head Count (Daily Total/2)', key: 'Computer Lab - Unique Head Count', width: 21},
+        { header: 'Subject(s) of Inquiry', key: 'Subject(s) of Inquiry:', width: 25},
+        { header: 'Additional Information', key: 'Additional Information:', width: 25}
     ];
 
-    wsGateCountSummary.columns.forEach(column => {
+    /*wsGateCountSummary.columns.forEach(column => {
               column.width = 22; // Set width to ~115px for each column
-          });
+          });*/
 
     gateCountData.forEach(item => {
         wsGateCountSummary.addRow(item);
@@ -861,8 +865,9 @@ function exportReport() {
     ];
 
     wsRoving.columns.forEach(column => {
-          column.width = 22; // Set width to ~115px for each column
+          column.width = 12; // Set width to ~115px for each column
       });
+    wsRoving.columns[0].width = 22
 
     exportRoving.forEach(item => {
         wsRoving.addRow(item);
@@ -1084,12 +1089,12 @@ function exportReport() {
     lastRow = wsGateCountSummary.lastRow
     wsGateCountSummary.insertRow(lastRow.number + 2, ['Date', addedGateCount, '', '', '', addedComputerLab]);
     let gateCountTotalRow = wsGateCountSummary.insertRow(lastRow.number + 5, ['','', 'Total', '', '', '', 'Total Lab', totalComputerLab])
-        gateCountTotalRow.getCell(4).value = { formula: 'SUM(D2:D40)' }
-        gateCountTotalRow.getCell(8).value = { formula: 'SUM(H2:H40)' };
+        gateCountTotalRow.getCell(4).value = { formula: `SUM(D2:D${lastRow.number})` };
+        gateCountTotalRow.getCell(8).value = { formula: `SUM(H2:H${lastRow.number})` };
     let gateCountAverageDay = wsGateCountSummary.insertRow(lastRow.number + 6, ['','', 'Average per day:', parseFloat(totalGateCountAverage), '', '', 'Average per day', parseFloat(totalLabAverage)]);
-        gateCountAverageDay.getCell(4).value = { formula: 'D45/' + totalDays };
+        gateCountAverageDay.getCell(4).value = { formula: `D${lastRow.number + 5}/${totalDays}` };
         gateCountAverageDay.getCell(4).numFmt = '0.00';
-        gateCountAverageDay.getCell(8).value = { formula: 'H45/' + totalDays };
+        gateCountAverageDay.getCell(8).value = { formula: `H${lastRow.number + 5}/${totalDays}` };
         gateCountAverageDay.getCell(8).numFmt = '0.00';
     wsGateCountSummary.insertRow(lastRow.number + 9, ['', '', 'Year Over Year Comparison']);
     wsGateCountSummary.insertRow(lastRow.number + 10, ['','', 'Last year', lastYear]);
@@ -1238,6 +1243,9 @@ function setActiveTab(selectedTab) {
         let content = "";
 
         switch (selectedTab.innerText) {
+            case 'Dashboard':
+                fileToLoad = "modules/dashboard-module.html";
+                break;
             case 'KC Library Ref Stats':
                 fileToLoad = "modules/reference-stats-module.html";
                 headers = refStatsHeaders
@@ -1288,10 +1296,14 @@ function setActiveTab(selectedTab) {
         }
 
         setTimeout(function () {
-            createTable(headers, data, tableName);
-            if(selectedTab.innerText == "Gate Count") initializeGateCountPage()
-            else if (selectedTab.innerText == "Roving Count") initializeRovingCountPage()
-            else if(selectedTab.innerText == "KC Library Ref Stats") calculateReference()
+            if(selectedTab.innerText === "Dashboard") {
+                loadCharts()
+            } else {
+                createTable(headers, data, tableName);
+                if(selectedTab.innerText == "Gate Count") initializeGateCountPage()
+                else if (selectedTab.innerText == "Roving Count") initializeRovingCountPage()
+                else if(selectedTab.innerText == "KC Library Ref Stats") calculateReference()
+            }
         }, 100)
         // Remove active class from all tabs
         const tabs = document.querySelectorAll('.side-tab ul li');
@@ -1651,7 +1663,7 @@ function generateTable(tableName, tableData) {
 }
 
 function calculateReference() {
-        if (refStats && refStats.length > 0) {
+        if (document.getElementById("chat-count") && refStats && refStats.length > 0) {
             document.getElementById("chat-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Chat").length;
             document.getElementById("in-person-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "In Person").length;
             document.getElementById("phone-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Phone").length;
@@ -1712,19 +1724,26 @@ function calculateReference() {
             document.getElementById("mouse-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "WIreless Mouse").length;
 
             document.getElementById("available-laptop-count").innerText = refStats.filter(record =>
-                record["Technology Item Type:"] === "Laptops" && record["Was Tech available at the time of request?"] === "Yes").length;
+                    record["Technology Item Type:"] === "Laptops" && record["Was Tech available at the time of request?"] === "Yes").length;
             document.getElementById("unavailable-laptop-count").innerText = refStats.filter(record =>
                     record["Technology Item Type:"] === "Laptops" && record["Was Tech available at the time of request?"] === "No").length;
 
             document.getElementById("method-inquiry-total").innerText = refStats.filter(record =>
                     methodOfInquiry.includes(record["Method of Inquiry:"])).length;
             document.getElementById("type-inquiry-total").innerText = refStats.filter(record =>
-                            typeOfInquiry.includes(record["Type of Inquiry:"])).length;
+                    typeOfInquiry.includes(record["Type of Inquiry:"])).length;
             document.getElementById("reference-inquiry-total").innerText = refStats.filter(record =>
-                record["Type of Inquiry:"] === "Basic Reference" || record["Type of Inquiry:"] === "Complex Reference").length;
+                    typeOfReference.includes(record["Type of Reference:"])).length + refStats.filter(record =>
+                    (record["Type of Inquiry:"] === "Basic Reference" || record["Type of Inquiry:"] === "Complex Reference") && record["Type of Reference:"] === "Other").length;
 
-            document.getElementById("facilitative-inquiry-total").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Facilitative").length;
-            document.getElementById("digital-inquiry-total").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Digital Support").length;
+            document.getElementById("facilitative-inquiry-total").innerText = refStats.filter(record =>
+                    typeOfFacilitativeInquiry.includes(record["Type of Facilitative Inquiry:"])).length + refStats.filter(record =>
+                    record["Type of Inquiry:"] === "Facilitative" && record["Type of Facilitative Inquiry:"] === "Other").length;
+
+            document.getElementById("digital-inquiry-total").innerText = refStats.filter(record =>
+                    typeOfDigitalSupportInquiry.includes(record["Type of  Digital Support Inquiry:"])).length + refStats.filter(record =>
+                    record["Type of Inquiry:"] === "Digital Support" && record["Type of  Digital Support Inquiry:"] === "Other").length;
+
             document.getElementById("loanable-tech-total").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Loanable Tech").length;
             document.getElementById("laptop-total").innerText = refStats.filter(record => record["Technology Item Type:"] === "Laptops").length;
         }
@@ -1785,6 +1804,110 @@ function processRecords(records) {
     });
 }
 
+function loadCharts() {
+    // Enable Chart.js plugin for datalabels
+            Chart.register(ChartDataLabels);
+
+            var ctx = document.getElementById("myPieChart").getContext("2d");
+
+            var dataValues = [12, 10, 8, 9, 11, 7, 6, 5, 4, 8, 7, 13]; // 12 categories
+            var dataLabels = [
+                        "Category 1", "Category 2", "Category 3", "Category 4", "Category 5",
+                        "Category 6", "Category 7", "Category 8", "Category 9", "Category 10",
+                        "Category 11", "Category 12"
+                    ];
+
+                    // 12 shades of blue from light to dark
+                    var colors = [
+                                "#ADD8E6", "#87CEEB", "#7EC8E3", "#6FB8D6", "#5FAFCA",
+                                "#4DA8C2", "#3D97B8", "#3189AE", "#2B79A3", "#256D98",
+                                "#1F6090", "#1A5686"
+                            ];
+
+            var total = dataValues.reduce((a, b) => a + b, 0); // Calculate total sum
+
+             var myPieChart = new Chart(ctx, {
+                        type: "pie",
+                        data: {
+                            labels: typeOfFacilitativeInquiry,
+                            datasets: [{
+                                data: dataValues,
+                                backgroundColor: colors
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: "Facilitative Inquiry",
+                                    font: { size: 18 }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(tooltipItem) {
+                                            let value = tooltipItem.raw;
+                                            let percentage = ((value / total) * 100).toFixed(1);
+                                            return `${value} (${percentage}%)`;
+                                        }
+                                    }
+                                },
+                                legend: {
+                                                        display: false // This hides the legend
+                                                    },
+                                datalabels: {
+                                                        color: "#fff", // Darker white color (light gray)
+                                                        font: { weight: "bold", size: 12 },
+                                                        formatter: (value, ctx) => {
+                                                            let percentage = ((value / total) * 100).toFixed(1);
+
+                                                            return `${percentage}%`; // Display category name and percentage with a line break
+                                                        },
+                                                        anchor: 'center', // Position the label outside the slice
+                                                        align: 'center',   // Align it to the left of the slice
+                                                        offset: 15,     // Small offset to push the label a little further out
+
+                                                        // Draw a line connecting the label to the slice
+                                                        connect: {
+                                                            line: {
+                                                                color: "#d3d3d3", // Line color to match the label
+                                                                width: 1
+                                                            }
+                                                        }
+                                                    }
+                            }
+                        },
+                    });
+
+            // Get the table body element
+                    let tableBody = document.getElementById("inquiryTable").getElementsByTagName('tbody')[0];
+
+                    // Loop through the data and add rows
+                             for (let i = 0; i < 6; i++) {
+                                 // Create a new row
+                                 let row = tableBody.insertRow();
+
+                                 // Create the first column cell (1st 6 values)
+                                 let cell1 = row.insertCell(0);
+                                 cell1.textContent = typeOfFacilitativeInquiry[i];
+                                 cell1.style.backgroundColor = colors[i];
+
+                                 // Create the second column (empty)
+                                 let cell2 = row.insertCell(1);
+                                 cell2.textContent = dataValues[i]
+                                 cell2.style.backgroundColor = colors[i + 6];
+
+                                 // Create the third column cell (7th to 12th values)
+                                 let cell3 = row.insertCell(2);
+                                 cell3.textContent = typeOfFacilitativeInquiry[i + 6];
+                                 cell3.style.backgroundColor = colors[i + 6];
+
+                                 // Create the fourth column (empty)
+                                 let cell4 = row.insertCell(3);
+                                 cell4.textContent = dataValues[i]
+                                 cell4.style.backgroundColor = colors[i + 6];
+                             }
+}
 let refStatsHeaders = ['Submission ID', 'Submitted', 'Method of Inquiry:', 'Type of Inquiry:', 'Type of Reference:', 'Type of Facilitative Inquiry:',
                 'Type of  Digital Support Inquiry:', 'Technology Item Type:', 'Software/Application Type:', "Student's Program", 'Year of Program',
                 'Was Tech available at the time of request?', 'Subject(s) of Inquiry:', 'Additional Information:']
@@ -1848,7 +1971,7 @@ let totalComputerLab = 0;
 let totalGateCountAverage = 0;
 let totalLabAverage = 0;
 let lastYear = 0;
-let totalDays = 0
+let totalDays = 1
 let changeText = '';
 let techTable;
 let rovingTable;

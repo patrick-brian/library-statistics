@@ -6,9 +6,10 @@ html, body {
 .card-header-chart {
     text-align: center;
     font-weight: bold;
+    margin: 2% 0;
     font-size: 1.5em;
-    margin: 30px 0 18px 0;
 }
+
 .table-wrapper {
 	height: 40%;
 	border-radius: 5px;
@@ -18,7 +19,6 @@ html, body {
 }
 
 .card-container {
-	display: flex;
     height: calc(60% - 5px);
     border-radius: 5px;
 }
@@ -32,9 +32,9 @@ html, body {
 
 table {
 	width: 100%;
+	height: 100%;
 	border-radius: 5px; /* Rounded corners */
 	border-collapse: collapse;
-	font-size: 0.8em;
 	padding: 5px;
 	text-align: center;
 }
