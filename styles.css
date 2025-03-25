@@ -112,17 +112,17 @@ html, body {
     border-left: none;
     height: 100%;
     width: 100%;
-    margin: 2%;
+    margin: 1%;
     align-items: center;
     text-align: center;
     display: flex;
     justify-content: center; /* Centers horizontally */
  }
 .card-number {
-    margin: 2%;
+    margin: 1%;
     display: flex;
     justify-content: center;
-    padding-top: 10px;
+
     border: 1px dotted black;
     border-top: none;
     border-bottom: none;

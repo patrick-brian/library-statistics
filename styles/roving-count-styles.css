@@ -37,6 +37,7 @@ table {
 	border-collapse: collapse;
 	padding: 5px;
 	text-align: center;
+	font-size: 0.76em;
 }
 
 th, td {

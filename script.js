@@ -1215,7 +1215,7 @@ function customMergedCell(mergedCell) {
             mergedCell.fill = {
                 type: 'pattern',
                 pattern: 'solid',
-                fgColor: { argb: 'FFF2CC' }
+                fgColor: { argb: 'CAEDFB' }
             };
         }
 
