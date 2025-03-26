@@ -1310,7 +1310,10 @@ function setActiveTab(selectedTab) {
 
         setTimeout(function () {
             if(selectedTab.innerText === "Dashboard") {
-                loadCharts()
+                loadCharts("facilitative-chart")
+                loadCharts("reference-chart")
+                loadCharts("digital-support-chart")
+                loadCharts("loanable-tech-chart")
             } else {
                 createTable(headers, data, tableName);
                 if(selectedTab.innerText == "Gate Count") initializeGateCountPage()
@@ -1827,109 +1830,122 @@ function processRecords(records) {
     });
 }
 
-function loadCharts() {
+function trimString(item, maxLength) {
+    if (item.length > maxLength) {
+        return item.slice(0, maxLength) + "...   "; // Truncate to 10 characters
+    }
+    return item + "      "; // Return the item as is if it's already 10 or fewer characters
+}
+function shortenListTo10Chars(arr) {
+    return arr.map(item => {
+        return trimString(item, 15)
+    });
+}
+
+function loadCharts(chartName) {
     // Enable Chart.js plugin for datalabels
-    let mainChart1 = document.getElementById("myPieChart")
+    let mainChart1 = document.getElementById(chartName)
     if(mainChart1) {
         var ctx = mainChart1.getContext("2d");
 
-        var dataValues = [12, 10, 8, 9, 11, 7, 6, 5, 4, 8, 7, 13]; // 12 categories
-        var dataLabels = [
-            "Category 1", "Category 2", "Category 3", "Category 4", "Category 5",
-            "Category 6", "Category 7", "Category 8", "Category 9", "Category 10",
-            "Category 11", "Category 12"
-            ];
+        // Sample data for the courses and percentages
+        const data = {
+            labels: shortenListTo10Chars(typeOfFacilitativeInquiry).concat('Other   '),  // Y-axis labels (courses)
+            datasets: [{
+                label: 'Course Percentage',
+                data: [85, 92, 74, 61, 10, 10, 10 ,10 ,10 ,10 ,10, 10], // X-axis values (percentages)
+                backgroundColor: '#006ac3', // Bar color
+                borderColor: '#006ac3', // Border color
+                borderWidth: 1
+            }]
+        };
 
-        // 12 shades of blue from light to dark
-        var colors = [
-            "#ADD8E6", "#87CEEB", "#7EC8E3", "#6FB8D6", "#5FAFCA",
-            "#4DA8C2", "#3D97B8", "#3189AE", "#2B79A3", "#256D98",
-            "#1F6090", "#1A5686"
-            ];
 
-        var total = dataValues.reduce((a, b) => a + b, 0); // Calculate total sum
-
-        var myPieChart = new Chart(ctx, {
-            type: "pie",
-            data: {
-                labels: typeOfFacilitativeInquiry,
-                datasets: [{
-                    data: dataValues,
-                    backgroundColor: colors
-                }]
-            },
+        // Configuration for the chart
+        const config = {
+            type: 'bar',
+            data: data,
             options: {
                 responsive: true,
+                indexAxis: 'y', // This makes the chart horizontal
+                scales: {
+                    x: {
+                        beginAtZero: true, // Ensures the X-axis starts at 0
+                        ticks: {
+                            callback: function(value) {
+
+                                return value + '%'; // Adding percentage symbol on X-axis
+                            }
+                        },
+                        grid: {
+                            display: false // This removes the y-axis grid lines
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            // Set the course labels to the Y-axis
+                            font: {
+                                size: 14
+                            }
+                        }
+                    }
+                },
                 plugins: {
-                    title: {
-                        display: true,
-                        text: "Facilitative Inquiry",
-                        font: { size: 18 }
+                     legend: {
+                        display: false // Hides the legend
                     },
                     tooltip: {
                         callbacks: {
                             label: function(tooltipItem) {
-                                let value = tooltipItem.raw;
-                                let percentage = ((value / total) * 100).toFixed(1);
-                                return `${value} (${percentage}%)`;
+                                return trimString(typeOfFacilitativeInquiry[tooltipItem.dataIndex], 40) + ': ' + tooltipItem.raw + '%';
+                            },
+                            title: function() {
+                               return ''; // Clear the title part of the tooltip
                             }
-                        }
-                    },
-                    legend: {
-                        display: false // This hides the legend
+                        } // Remove the title part (optional)
+
                     },
                     datalabels: {
-                        color: "#fff", // Darker white color (light gray)
-                        font: { weight: "bold", size: 12 },
-                        formatter: (value, ctx) => {
-                            let percentage = ((value / total) * 100).toFixed(1);
-
-                            return `${percentage}%`; // Display category name and percentage with a line break
+                        color: (context) => {
+                            const value = context.dataset.data[context.dataIndex];
+                            return value > 50 ? '#fff' : '#000'; // White font for values > 50%, black for others
                         },
-                        anchor: 'center', // Position the label outside the slice
-                        align: 'center',   // Align it to the left of the slice
-                        offset: 15,     // Small offset to push the label a little further out
-
-                        // Draw a line connecting the label to the slice
-                        connect: {
-                            line: {
-                                color: "#d3d3d3", // Line color to match the label
-                                width: 1
-                            }
+                        font: {
+                            weight: "bold",
+                            size: 12
+                        },
+                        formatter: (value) => {
+                            let percentage = ((value / 100) * 100).toFixed(1);
+                            return `${percentage}%`; // Display percentage
+                        },
+                        // Positioning logic for labels based on value
+                        anchor: (context) => {
+                            const value = context.dataset.data[context.dataIndex];
+                            return value > 50 ? 'center' : 'end'; // 'center' for inside, 'end' for outside
+                        },
+                        align: (context) => {
+                            const value = context.dataset.data[context.dataIndex];
+                            return value > 50 ? 'center' : 'start'; // 'center' for inside, 'start' for outside
+                        },
+                        // Adjust label position based on the value (use offset for outside)
+                        offset: (context) => {
+                            const value = context.dataset.data[context.dataIndex];
+                            return value > 50 ? 0 : -40; // No offset inside, offset 10px outside
+                        },
+                        // Use position to force the label inside or outside based on the value
+                        position: (context) => {
+                            const value = context.dataset.data[context.dataIndex];
+                            return value > 50 ? 'inside' : 'outside'; // 'inside' for > 50%, 'outside' for <= 50%
                         }
                     }
+
                 }
-            },
-        });
+            }
+        };
 
-        // Get the table body element
-        let tableBody = document.getElementById("inquiryTable").getElementsByTagName('tbody')[0];
-
-        // Loop through the data and add rows
-        for (let i = 0; i < 6; i++) {
-        // Create a new row
-        let row = tableBody.insertRow();
-
-        // Create the first column cell (1st 6 values)
-        let cell1 = row.insertCell(0);
-        cell1.textContent = typeOfFacilitativeInquiry[i];
-        cell1.style.backgroundColor = colors[i];
-
-        // Create the second column (empty)
-        let cell2 = row.insertCell(1);
-        cell2.textContent = dataValues[i]
-        cell2.style.backgroundColor = colors[i + 6];
-
-        // Create the third column cell (7th to 12th values)
-        let cell3 = row.insertCell(2);
-        cell3.textContent = typeOfFacilitativeInquiry[i + 6];
-        cell3.style.backgroundColor = colors[i + 6];
-
-        // Create the fourth column (empty)
-        let cell4 = row.insertCell(3);
-        cell4.textContent = dataValues[i]
-        cell4.style.backgroundColor = colors[i + 6];
-        }
+        // Create the chart
+        const myChart = new Chart(ctx, config);
     } else loadCharts()
 }
 let refStatsHeaders = ['Submission ID', 'Submitted', 'Method of Inquiry:', 'Type of Inquiry:', 'Type of Reference:', 'Type of Facilitative Inquiry:',

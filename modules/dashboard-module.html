@@ -7,32 +7,57 @@
     <div id="dashboard-content" class="tab-content">
         <div class="card-container">
             <div class="card">
-                <div class="chart-container">
-                <canvas id="myPieChart"></canvas>
-                </div>
-                <div><table id="inquiryTable">
-                    <thead>
-                    <tr>
-                        <th>Type of Facilitative Inquiry</th>
-                        <th></th> <!-- Empty second column -->
-                        <th>Type of Facilitative Inquiry</th>
-                        <th></th> <!-- Empty fourth column -->
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <!-- Rows will be dynamically added here -->
-                    </tbody>
-                </table></div>
             </div>
-            <div class="card">
+            <div class="card-container small-container">
+                <div class="card-container">
+                    <div class="card">
+                        <div class="card-header">Reference Inquiries</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Reference Inquiries</div>
+                    </div>
+                </div>
+                <div class="card-container">
+                    <div class="card">
+                        <div class="card-header">Reference Inquiries</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Reference Inquiries</div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="card-container">
             <div class="card">
+                <div class="card-header">Facilitative Inquiries</div>
+                <div class="chart-container">
+                <canvas id="facilitative-chart" height="400" width="500"></canvas>
+                </div>
+                <div></div>
             </div>
             <div class="card">
+                <div class="card-header">Reference Inquiries</div>
+                <div class="chart-container">
+                    <canvas id="reference-chart" height="400" width="500"></canvas>
+                </div>
+                <div></div>
+            </div>
+            <div class="card">
+                    <div class="card-header">Digital Support Inquiries</div>
+                <div class="chart-container">
+                    <canvas id="digital-support-chart" height="400" width="500"></canvas>
+                </div>
+                <div></div>
+            </div>
+            <div class="card">
+                <div class="card-header">Loanable Tech Inquiries</div>
+                <div class="chart-container">
+                    <canvas id="loanable-tech-chart" height="400" width="500"></canvas>
+                </div>
+                <div></div>
             </div>
         </div>
+
     </div>
 </body>
 </html>
