@@ -841,6 +841,7 @@ function exportReport() {
         { header: 'Computer Lab', key: 'Computer Lab', width: 11},
         { header: 'Daily Total', key: 'Computer Lab - Daily Total', width: 11},
         { header: 'Unique Head Count (Daily Total/2)', key: 'Computer Lab - Unique Head Count', width: 21},
+        { width: 5},
         { header: 'Subject(s) of Inquiry', key: 'Subject(s) of Inquiry:', width: 25},
         { header: 'Additional Information', key: 'Additional Information:', width: 25}
     ];
@@ -852,6 +853,16 @@ function exportReport() {
     gateCountData.forEach(item => {
         wsGateCountSummary.addRow(item);
     });
+    let lastRow = wsGateCountSummary.lastRow
+    console.log(lastRow)
+    // Assign the formula to column C starting from row 2
+    for (let row = 2; row <= lastRow.number - 1; row++) {
+      wsGateCountSummary.getCell(`C${row}`).value = { formula: `B${row + 1}-B${row}`};
+      console.log(wsGateCountSummary.getCell(`C${row}`).value)
+      wsGateCountSummary.getCell(`D${row}`).value = { formula: `C${row}/2`};
+      wsGateCountSummary.getCell(`G${row}`).value = { formula: `F${row + 1}-F${row}`};
+      wsGateCountSummary.getCell(`H${row}`).value = { formula: `G${row}/2`};
+    }
 
     // Create the third worksheet 'Roving Count'
     const wsRoving = workbook.addWorksheet('Roving Count');
@@ -874,9 +885,9 @@ function exportReport() {
         wsRoving.addRow(item);
     });
 
-    let lastRow = wsRefStats.lastRow
+    lastRow = wsRefStats.lastRow
 
-    console.log(lastRow)
+
     let totalRow1 = wsRefStats.insertRow(lastRow.number + 6, ['Type of Inquiry', 'Loanable Tech', '', '', 'Type of Reference Inquiry', 'Citation Help', '', '', 'Loanable Tech', 'Calculator', '']);
         totalRow1.getCell(3).value = { formula: `COUNTIF(C2:C${lastRow.number}, "Loanable Tech")` };
         totalRow1.getCell(7).value = { formula: `COUNTIF(D2:D${lastRow.number}, "Citation Help")` };
@@ -1016,6 +1027,7 @@ function exportReport() {
 
     let totalRow18 = wsRefStats.insertRow(lastRow.number + 23, ['', 'Community User', '', '', '', '', '', '', '', '', '']);
         totalRow18.getCell(3).value = { formula: `COUNTIF(E2:E${lastRow.number}, "Community User")` };
+        totalRow18.getCell(8).value = { formula: `SUM(H${lastRow.number + 21}:H${lastRow.number + 22})` };
         totalRow18.eachCell((cell, colNumber) => {
             customMergedCell(cell);
         });
@@ -1669,7 +1681,7 @@ function generateTable(tableName, tableData) {
 }
 
 function calculateReference() {
-        if (document.getElementById("chat-count") && refStats && refStats.length > 0) {
+        if (document.getElementById("chat-count") && refStats) {
             document.getElementById("chat-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Chat").length;
             document.getElementById("in-person-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "In Person").length;
             document.getElementById("phone-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Phone").length;
@@ -1793,19 +1805,24 @@ function splitRecord(record) {
 function processRecords(records) {
     return records.map(record => {
         // Function to check and update a field
-        function checkAndUpdateField(fieldName, validList) {
+        function checkAndUpdateField(inquiry, fieldName, validList) {
             let fieldValue = record[fieldName];
-            if (fieldValue && !validList.includes(fieldValue)) {
+            if(inquiry === "Gate Count") {
+                if(fieldValue === "") record[fieldName] = 0
+            }
+            else if (record["Type of Inquiry:"] === inquiry && !validList.includes(fieldValue)) {
                 record["Additional Information:"] = (record["Additional Information:"] || "") + " " + fieldValue;
                 record[fieldName] = "Other";
             }
         }
 
         // Process all three fields
-        checkAndUpdateField("Type of Facilitative Inquiry:", typeOfFacilitativeInquiry);
-        checkAndUpdateField("Type of Reference:", typeOfReference);
-        checkAndUpdateField("Type of  Digital Support Inquiry:", typeOfDigitalSupportInquiry);
-
+        checkAndUpdateField("Facilitative", "Type of Facilitative Inquiry:", typeOfFacilitativeInquiry);
+        checkAndUpdateField("Basic Reference", "Type of Reference:", typeOfReference);
+        checkAndUpdateField("Complex Reference", "Type of Reference:", typeOfReference);
+        checkAndUpdateField("Digital Support", "Type of  Digital Support Inquiry:", typeOfDigitalSupportInquiry);
+        checkAndUpdateField("Gate Count", "Gate Count:", []);
+        checkAndUpdateField("Gate Count", "Computer Lab", []);
         return record;
     });
 }
@@ -1970,7 +1987,7 @@ let typeOfInquiryData;
 let rovingData;
 let loanableTechData;
 let savedData = [];
-let refStats;
+let refStats = [];
 let addedGateCount = 0;
 let addedComputerLab = 0;
 let totalGateCount = 0;
