@@ -1,5 +1,6 @@
 // Load the 'gate-count-module' content immediately on page load
 window.onload = function() {
+  Chart.register(ChartDataLabels);
   setActiveTab(document.getElementById('dashboard')); // Set the second tab as active by default
   while (currentTime <= 19.5) {
       let hour = Math.floor(currentTime);
@@ -1324,16 +1325,21 @@ function initializeGateCountPage() {
         document.getElementById('input1').value = addedGateCount
         document.getElementById('input2').value = addedComputerLab
         calculateTotals()
-    }
+    } else initializeGateCountPage()
 }
 
 function initializeRovingCountPage() {
+    if (document.getElementById("study-room-chart") &&
+        document.getElementById("group-table-chart") &&
+        document.getElementById("study-carrel-chart") &&
+        document.getElementById("computer-lab-chart")) {
 
-    groupRovingData();
-    generateTable("study-room-chart", computerLabAvgHeadCounts);
-    generateTable("group-table-chart", groupTablesAvgHeadCounts);
-    generateTable("study-carrel-chart", studyCarrelsAvgHeadCounts);
-    generateTable("computer-lab-chart", studyRoomAvgHeadCounts);
+        groupRovingData();
+        generateTable("study-room-chart", computerLabAvgHeadCounts);
+        generateTable("group-table-chart", groupTablesAvgHeadCounts);
+        generateTable("study-carrel-chart", studyCarrelsAvgHeadCounts);
+        generateTable("computer-lab-chart", studyRoomAvgHeadCounts);
+    } else initializeRovingCountPage()
 
 }
 
@@ -1746,7 +1752,7 @@ function calculateReference() {
 
             document.getElementById("loanable-tech-total").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Loanable Tech").length;
             document.getElementById("laptop-total").innerText = refStats.filter(record => record["Technology Item Type:"] === "Laptops").length;
-        }
+        } else calculateReference()
 
 }
 
@@ -1806,107 +1812,108 @@ function processRecords(records) {
 
 function loadCharts() {
     // Enable Chart.js plugin for datalabels
-            Chart.register(ChartDataLabels);
+    let mainChart1 = document.getElementById("myPieChart")
+    if(mainChart1) {
+        var ctx = mainChart1.getContext("2d");
 
-            var ctx = document.getElementById("myPieChart").getContext("2d");
+        var dataValues = [12, 10, 8, 9, 11, 7, 6, 5, 4, 8, 7, 13]; // 12 categories
+        var dataLabels = [
+            "Category 1", "Category 2", "Category 3", "Category 4", "Category 5",
+            "Category 6", "Category 7", "Category 8", "Category 9", "Category 10",
+            "Category 11", "Category 12"
+            ];
 
-            var dataValues = [12, 10, 8, 9, 11, 7, 6, 5, 4, 8, 7, 13]; // 12 categories
-            var dataLabels = [
-                        "Category 1", "Category 2", "Category 3", "Category 4", "Category 5",
-                        "Category 6", "Category 7", "Category 8", "Category 9", "Category 10",
-                        "Category 11", "Category 12"
-                    ];
+        // 12 shades of blue from light to dark
+        var colors = [
+            "#ADD8E6", "#87CEEB", "#7EC8E3", "#6FB8D6", "#5FAFCA",
+            "#4DA8C2", "#3D97B8", "#3189AE", "#2B79A3", "#256D98",
+            "#1F6090", "#1A5686"
+            ];
 
-                    // 12 shades of blue from light to dark
-                    var colors = [
-                                "#ADD8E6", "#87CEEB", "#7EC8E3", "#6FB8D6", "#5FAFCA",
-                                "#4DA8C2", "#3D97B8", "#3189AE", "#2B79A3", "#256D98",
-                                "#1F6090", "#1A5686"
-                            ];
+        var total = dataValues.reduce((a, b) => a + b, 0); // Calculate total sum
 
-            var total = dataValues.reduce((a, b) => a + b, 0); // Calculate total sum
-
-             var myPieChart = new Chart(ctx, {
-                        type: "pie",
-                        data: {
-                            labels: typeOfFacilitativeInquiry,
-                            datasets: [{
-                                data: dataValues,
-                                backgroundColor: colors
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: {
-                                title: {
-                                    display: true,
-                                    text: "Facilitative Inquiry",
-                                    font: { size: 18 }
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(tooltipItem) {
-                                            let value = tooltipItem.raw;
-                                            let percentage = ((value / total) * 100).toFixed(1);
-                                            return `${value} (${percentage}%)`;
-                                        }
-                                    }
-                                },
-                                legend: {
-                                                        display: false // This hides the legend
-                                                    },
-                                datalabels: {
-                                                        color: "#fff", // Darker white color (light gray)
-                                                        font: { weight: "bold", size: 12 },
-                                                        formatter: (value, ctx) => {
-                                                            let percentage = ((value / total) * 100).toFixed(1);
-
-                                                            return `${percentage}%`; // Display category name and percentage with a line break
-                                                        },
-                                                        anchor: 'center', // Position the label outside the slice
-                                                        align: 'center',   // Align it to the left of the slice
-                                                        offset: 15,     // Small offset to push the label a little further out
-
-                                                        // Draw a line connecting the label to the slice
-                                                        connect: {
-                                                            line: {
-                                                                color: "#d3d3d3", // Line color to match the label
-                                                                width: 1
-                                                            }
-                                                        }
-                                                    }
+        var myPieChart = new Chart(ctx, {
+            type: "pie",
+            data: {
+                labels: typeOfFacilitativeInquiry,
+                datasets: [{
+                    data: dataValues,
+                    backgroundColor: colors
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: "Facilitative Inquiry",
+                        font: { size: 18 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                let value = tooltipItem.raw;
+                                let percentage = ((value / total) * 100).toFixed(1);
+                                return `${value} (${percentage}%)`;
                             }
+                        }
+                    },
+                    legend: {
+                        display: false // This hides the legend
+                    },
+                    datalabels: {
+                        color: "#fff", // Darker white color (light gray)
+                        font: { weight: "bold", size: 12 },
+                        formatter: (value, ctx) => {
+                            let percentage = ((value / total) * 100).toFixed(1);
+
+                            return `${percentage}%`; // Display category name and percentage with a line break
                         },
-                    });
+                        anchor: 'center', // Position the label outside the slice
+                        align: 'center',   // Align it to the left of the slice
+                        offset: 15,     // Small offset to push the label a little further out
 
-            // Get the table body element
-                    let tableBody = document.getElementById("inquiryTable").getElementsByTagName('tbody')[0];
+                        // Draw a line connecting the label to the slice
+                        connect: {
+                            line: {
+                                color: "#d3d3d3", // Line color to match the label
+                                width: 1
+                            }
+                        }
+                    }
+                }
+            },
+        });
 
-                    // Loop through the data and add rows
-                             for (let i = 0; i < 6; i++) {
-                                 // Create a new row
-                                 let row = tableBody.insertRow();
+        // Get the table body element
+        let tableBody = document.getElementById("inquiryTable").getElementsByTagName('tbody')[0];
 
-                                 // Create the first column cell (1st 6 values)
-                                 let cell1 = row.insertCell(0);
-                                 cell1.textContent = typeOfFacilitativeInquiry[i];
-                                 cell1.style.backgroundColor = colors[i];
+        // Loop through the data and add rows
+        for (let i = 0; i < 6; i++) {
+        // Create a new row
+        let row = tableBody.insertRow();
 
-                                 // Create the second column (empty)
-                                 let cell2 = row.insertCell(1);
-                                 cell2.textContent = dataValues[i]
-                                 cell2.style.backgroundColor = colors[i + 6];
+        // Create the first column cell (1st 6 values)
+        let cell1 = row.insertCell(0);
+        cell1.textContent = typeOfFacilitativeInquiry[i];
+        cell1.style.backgroundColor = colors[i];
 
-                                 // Create the third column cell (7th to 12th values)
-                                 let cell3 = row.insertCell(2);
-                                 cell3.textContent = typeOfFacilitativeInquiry[i + 6];
-                                 cell3.style.backgroundColor = colors[i + 6];
+        // Create the second column (empty)
+        let cell2 = row.insertCell(1);
+        cell2.textContent = dataValues[i]
+        cell2.style.backgroundColor = colors[i + 6];
 
-                                 // Create the fourth column (empty)
-                                 let cell4 = row.insertCell(3);
-                                 cell4.textContent = dataValues[i]
-                                 cell4.style.backgroundColor = colors[i + 6];
-                             }
+        // Create the third column cell (7th to 12th values)
+        let cell3 = row.insertCell(2);
+        cell3.textContent = typeOfFacilitativeInquiry[i + 6];
+        cell3.style.backgroundColor = colors[i + 6];
+
+        // Create the fourth column (empty)
+        let cell4 = row.insertCell(3);
+        cell4.textContent = dataValues[i]
+        cell4.style.backgroundColor = colors[i + 6];
+        }
+    } else loadCharts()
 }
 let refStatsHeaders = ['Submission ID', 'Submitted', 'Method of Inquiry:', 'Type of Inquiry:', 'Type of Reference:', 'Type of Facilitative Inquiry:',
                 'Type of  Digital Support Inquiry:', 'Technology Item Type:', 'Software/Application Type:', "Student's Program", 'Year of Program',
