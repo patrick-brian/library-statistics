@@ -2,6 +2,11 @@
 window.onload = function() {
   Chart.register(ChartDataLabels);
   setActiveTab(document.getElementById('dashboard')); // Set the second tab as active by default
+  setActiveTab(document.getElementById('referencestats')); // Set the second tab as active by default
+  setActiveTab(document.getElementById('gateCountTab')); // Set the second tab as active by default
+  setActiveTab(document.getElementById('rovingCountTab')); // Set the second tab as active by default
+  setActiveTab(document.getElementById('dashboard')); // Set the second tab as active by default
+
   while (currentTime <= 19.5) {
       let hour = Math.floor(currentTime);
           let minute = (currentTime % 1 === 0.5) ? '30' : '00';
@@ -1340,7 +1345,7 @@ function initializeGateCountPage() {
         document.getElementById('input1').value = addedGateCount
         document.getElementById('input2').value = addedComputerLab
         calculateTotals()
-    } else initializeGateCountPage()
+    } //else initializeGateCountPage()
 }
 
 function initializeRovingCountPage() {
@@ -1354,7 +1359,7 @@ function initializeRovingCountPage() {
         generateTable("group-table-chart", groupTablesAvgHeadCounts);
         generateTable("study-carrel-chart", studyCarrelsAvgHeadCounts);
         generateTable("computer-lab-chart", studyRoomAvgHeadCounts);
-    } else initializeRovingCountPage()
+    } //else initializeRovingCountPage()
 
 }
 
@@ -1767,7 +1772,7 @@ function calculateReference() {
 
             document.getElementById("loanable-tech-total").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Loanable Tech").length;
             document.getElementById("laptop-total").innerText = refStats.filter(record => record["Technology Item Type:"] === "Laptops").length;
-        } else calculateReference()
+        } //else calculateReference()
 
 }
 
@@ -1845,8 +1850,11 @@ function shortenListTo10Chars(arr) {
 function loadCharts(chartName) {
     // Enable Chart.js plugin for datalabels
     let mainChart1 = document.getElementById(chartName)
+    let ctx;
+    let myChart = null;
     if(mainChart1) {
-        var ctx = mainChart1.getContext("2d");
+
+        ctx = mainChart1.getContext("2d");
 
         // Sample data for the courses and percentages
         const data = {
@@ -1944,9 +1952,9 @@ function loadCharts(chartName) {
             }
         };
 
-        // Create the chart
-        const myChart = new Chart(ctx, config);
-    } else loadCharts()
+        if(myChart) myChart.destroy()
+        myChart = new Chart(ctx, config);
+    } //else loadCharts()
 }
 let refStatsHeaders = ['Submission ID', 'Submitted', 'Method of Inquiry:', 'Type of Inquiry:', 'Type of Reference:', 'Type of Facilitative Inquiry:',
                 'Type of  Digital Support Inquiry:', 'Technology Item Type:', 'Software/Application Type:', "Student's Program", 'Year of Program',
