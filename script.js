@@ -5,7 +5,9 @@ window.onload = function() {
   setActiveTab(document.getElementById('referencestats')); // Set the second tab as active by default
   setActiveTab(document.getElementById('gateCountTab')); // Set the second tab as active by default
   setActiveTab(document.getElementById('rovingCountTab')); // Set the second tab as active by default
-  setActiveTab(document.getElementById('dashboard')); // Set the second tab as active by default
+  setTimeout(function () {
+    setActiveTab(document.getElementById('dashboard')); // Set the second tab as active by default
+  })
 
   while (currentTime <= 19.5) {
       let hour = Math.floor(currentTime);
