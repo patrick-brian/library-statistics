@@ -1321,6 +1321,8 @@ function setActiveTab(selectedTab) {
                 loadCharts("reference-chart")
                 loadCharts("digital-support-chart")
                 loadCharts("loanable-tech-chart")
+                loadCharts("availability-chart")
+                loadCharts("patron-program-chart")
             } else {
                 createTable(headers, data, tableName);
                 if(selectedTab.innerText == "Gate Count") initializeGateCountPage()
@@ -1844,7 +1846,6 @@ function trimString(item, maxLength) {
     return item + "      "; // Return the item as is if it's already 10 or fewer characters
 }
 function shortenListTo10Chars(arr) {
-    console.log(arr)
     return arr.map(item => {
         return trimString(item, 15)
     });

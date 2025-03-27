@@ -1,5 +1,10 @@
+#dashboard-content {
+    display:flex;
+    height: 100.5%;
+}
+
 .card-container {
-    height: 52%;
+    height: 100%;
     width: 100%;
 }
 
@@ -9,13 +14,4 @@ canvas {
 
 }
 
-.card-header {
-    height: 0%;
-    padding: 10%;
-}
 
-.small-container {
-    flex-direction: column;
-    height: 100%;
-    width: 101.3%
-}

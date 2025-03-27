@@ -5,59 +5,59 @@
 </head>
 <body>
     <div id="dashboard-content" class="tab-content">
-        <div class="card-container">
-            <div class="card">
-            </div>
-            <div class="card-container small-container">
-                <div class="card-container">
-                    <div class="card">
-                        <div class="card-header">Reference Inquiries</div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header">Reference Inquiries</div>
+        <div style="display: flex; flex-direction: column; width: 75%; height: 100%;">
+            <div class="card-container">
+                <div class="card">
+                    <div class="card-header">Facilitative Inquiries</div>
+                    <div class="chart-container">
+                    <canvas id="facilitative-chart" height="400" width="500"></canvas>
                     </div>
                 </div>
-                <div class="card-container">
-                    <div class="card">
-                        <div class="card-header">Reference Inquiries</div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header">Reference Inquiries</div>
+                <div class="card">
+                    <div class="card-header">Reference Inquiries</div>
+                    <div class="chart-container">
+                        <canvas id="reference-chart" height="400" width="500"></canvas>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="card-container">
-            <div class="card">
-                <div class="card-header">Facilitative Inquiries</div>
-                <div class="chart-container">
-                <canvas id="facilitative-chart" height="400" width="500"></canvas>
+                <div class="card">
+                        <div class="card-header">Digital Support Inquiries</div>
+                    <div class="chart-container">
+                        <canvas id="digital-support-chart" height="400" width="500"></canvas>
+                    </div>
                 </div>
-                <div></div>
-            </div>
-            <div class="card">
-                <div class="card-header">Reference Inquiries</div>
-                <div class="chart-container">
-                    <canvas id="reference-chart" height="400" width="500"></canvas>
-                </div>
-                <div></div>
-            </div>
-            <div class="card">
-                    <div class="card-header">Digital Support Inquiries</div>
-                <div class="chart-container">
-                    <canvas id="digital-support-chart" height="400" width="500"></canvas>
-                </div>
-                <div></div>
-            </div>
-            <div class="card">
-                <div class="card-header">Loanable Tech Inquiries</div>
-                <div class="chart-container">
-                    <canvas id="loanable-tech-chart" height="400" width="500"></canvas>
-                </div>
-                <div></div>
-            </div>
-        </div>
 
+            </div>
+            <div class="card-container" style="box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.5); margin: 5px; width:99.3%">
+                <div style="display: flex; flex-direction: column; width: 100%; height: 100%;">
+                    <div class="card-header" style="width: 100%">Loanable Tech</div>
+                    <div class="card-container">
+                        <div class="card" style="box-shadow:none">
+                            <div class="card-header">Inquiries</div>
+                            <div class="chart-container">
+                                <canvas id="loanable-tech-chart" height="400" width="500"></canvas>
+                            </div>
+                        </div>
+                        <div class="card" style="box-shadow:none">
+                            <div class="card-header">Availability</div>
+                            <div class="chart-container">
+                                <canvas id="availability-chart" height="400" width="500"></canvas>
+                            </div>
+                        </div>
+                        <div class="card" style="box-shadow:none">
+                            <div class="card-header">Student's Program</div>
+                            <div class="chart-container">
+                                <canvas id="patron-program-chart" height="400" width="500"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-container" style="height: 100%; width: 25%;">
+            <div class="card">
+                <div class="card-header">Distinctive Inquiries</div>
+            </div>
+        </div>
     </div>
 
 </body>
