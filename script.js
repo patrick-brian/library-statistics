@@ -81,25 +81,35 @@ function handleFileUpload(event) {
                     ? previousItem["Gate Count:"] - item["Gate Count:"]  // Subtract previous "Gate Count" from current
                     : 0; // For the first item, there's no previous item, so we default to 0
 
+                  // If the calculated daily total is negative, assign the previous item's gate count
+                  const adjustedGateCountDailyTotal = gateCountDailyTotal < 0
+                    ? previousItem ? previousItem["Gate Count:"] : 0
+                    : gateCountDailyTotal;
+
+
                   // Calculate "Gate Count - Unique Head Count" as half of "Gate Count - Daily Total"
-                  const gateCountUniqueHeadCount = gateCountDailyTotal / 2;
+                  const gateCountUniqueHeadCount = adjustedGateCountDailyTotal / 2;
 
                   // Calculate "Computer Lab - Daily Total" as the difference from the previous "Computer Lab"
                   const computerLabDailyTotal = previousItem
                     ? previousItem["Computer Lab"] - item["Computer Lab"]
                     : 0; // For the first item, default to 0
 
+                  const adjustedComputerLabDailyTotal = computerLabDailyTotal < 0
+                                      ? previousItem ? previousItem["Computer Lab"] : 0
+                                      : computerLabDailyTotal;
+
                   // Calculate "Computer Lab - Unique Head Count" as half of "Computer Lab - Daily Total"
-                  const computerLabUniqueHeadCount = computerLabDailyTotal / 2;
+                  const computerLabUniqueHeadCount = adjustedComputerLabDailyTotal / 2;
 
                   return {
                     "Submission ID": item["Submission ID"],
                     "Submitted": item["Submitted"],
                     "Gate Count:": item["Gate Count:"],
-                    "Gate Count - Daily Total": gateCountDailyTotal,
+                    "Gate Count - Daily Total": adjustedGateCountDailyTotal,
                     "Gate Count - Unique Head Count": gateCountUniqueHeadCount,
                     "Computer Lab": item["Computer Lab"],
-                    "Computer Lab - Daily Total": computerLabDailyTotal,
+                    "Computer Lab - Daily Total": adjustedComputerLabDailyTotal,
                     "Computer Lab - Unique Head Count": computerLabUniqueHeadCount,
                     "Subject(s) of Inquiry:": item["Subject(s) of Inquiry:"],
                     "Additional Information:": item["Additional Information:"]
@@ -270,9 +280,6 @@ function createTable(headers, data, tableName){
     return dataTable
 }
 
-function sortColumn(index) {
-}
-
 // Handle Calculate button click
 function calculate(){
     let tableName = "#gate-count-data-table"
@@ -370,8 +377,17 @@ function deleteRow(cancelButton, tableName, rowIndex) {
         if (tableName === '#gate-count-data-table') {
             if(indexToDelete < deleteData.length - 1 && indexToDelete > 0) {
                 deleteData[indexToDelete+1]["Gate Count - Daily Total"] = deleteData[indexToDelete -1]["Gate Count:"] - deleteData[indexToDelete+1]["Gate Count:"]
+                // If the "Gate Count - Daily Total" is negative, assign the value from the previous "Gate Count"
+                if (deleteData[indexToDelete + 1]["Gate Count - Daily Total"] < 0) {
+                  deleteData[indexToDelete + 1]["Gate Count - Daily Total"] = deleteData[indexToDelete - 1]["Gate Count:"];
+                }
                 deleteData[indexToDelete+1]["Gate Count - Unique Head Count"] = deleteData[indexToDelete +1]["Gate Count - Daily Total"]/2
+
                 deleteData[indexToDelete+1]["Computer Lab - Daily Total"] = deleteData[indexToDelete - 1]["Computer Lab"] - deleteData[indexToDelete+1]["Computer Lab"]
+                // If the "Gate Count - Daily Total" is negative, assign the value from the previous "Gate Count"
+                if (deleteData[indexToDelete + 1]["Computer Lab - Daily Total"] < 0) {
+                  deleteData[indexToDelete + 1]["Computer Lab - Daily Total"] = deleteData[indexToDelete - 1]["Computer Lab"];
+                }
                 deleteData[indexToDelete+1]["Computer Lab - Unique Head Count"] = deleteData[indexToDelete+1]["Computer Lab - Daily Total"]/2
             }
         }
@@ -471,7 +487,6 @@ function generateOptions(originalText, optionsArray) {
     `<option value="${option}" ${originalText === option ? 'selected' : ''}>${option}</option>`
   ).join('');
 }
-
 
 function addRow(tableName, rowIndex) {
     removeEditOrAdd(tableName)
@@ -615,21 +630,57 @@ function saveRow(button, rowData, tableName) {
         saveData[indexToUpdate] = { ...saveData[indexToUpdate], ...rowData };
         if (tableName === '#gate-count-data-table' && indexToUpdate > 0) {
             saveData[indexToUpdate]["Gate Count - Daily Total"] = saveData[indexToUpdate - 1]["Gate Count:"] - saveData[indexToUpdate]["Gate Count:"]
+            if (saveData[indexToUpdate]["Gate Count - Daily Total"] < 0) {
+              saveData[indexToUpdate]["Gate Count - Daily Total"] = saveData[indexToUpdate]["Gate Count:"];
+            }
             saveData[indexToUpdate]["Gate Count - Unique Head Count"] = saveData[indexToUpdate]["Gate Count - Daily Total"]/2
+
             saveData[indexToUpdate]["Computer Lab - Daily Total"] = saveData[indexToUpdate - 1]["Computer Lab"] - saveData[indexToUpdate]["Computer Lab"]
+            if (saveData[indexToUpdate]["Computer Lab - Daily Total"] < 0) {
+              saveData[indexToUpdate]["Computer Lab - Daily Total"] = saveData[indexToUpdate - 1]["Computer Lab"];
+            }
             saveData[indexToUpdate]["Computer Lab - Unique Head Count"] = saveData[indexToUpdate]["Computer Lab - Daily Total"]/2
+
+            saveData[indexToUpdate+1]["Gate Count - Daily Total"] = rowData["Gate Count:"] - saveData[indexToUpdate+1]["Gate Count:"]
+            if (saveData[indexToUpdate+1]["Gate Count - Daily Total"] < 0) {
+              saveData[indexToUpdate+1]["Gate Count - Daily Total"] = rowData["Gate Count:"];
+            }
+            saveData[indexToUpdate+1]["Gate Count - Unique Head Count"] = saveData[indexToUpdate+1]["Gate Count - Daily Total"]/2
+
+            saveData[indexToUpdate+1]["Computer Lab - Daily Total"] = rowData["Computer Lab"] - saveData[indexToUpdate+1]["Computer Lab"]
+            if (saveData[indexToUpdate+1]["Computer Lab - Daily Total"] < 0) {
+              saveData[indexToUpdate+1]["Computer Lab - Daily Total"] = rowData["Computer Lab"];
+            }
+            saveData[indexToUpdate+1]["Computer Lab - Unique Head Count"] = saveData[indexToUpdate+1]["Computer Lab - Daily Total"]/2
         }
     } else {
         // Find the position to insert the new element
         for (let i = 0; i < gateCountData.length - 1; i++) {
             if (saveData[i]["Submission ID"] > submissionId && saveData[i + 1]["Submission ID"] < submissionId) {
                 rowData["Gate Count - Daily Total"] = saveData[i]["Gate Count:"] - rowData["Gate Count:"]
+                // If the "Gate Count - Daily Total" is negative, assign the value from the row data's "Gate Count:"
+                if (rowData["Gate Count - Daily Total"] < 0) {
+                  rowData["Gate Count - Daily Total"] = saveData[i]["Gate Count:"];
+                }
                 rowData["Gate Count - Unique Head Count"] = rowData["Gate Count - Daily Total"]/2
+
                 rowData["Computer Lab - Daily Total"] = saveData[i]["Computer Lab"] - rowData["Computer Lab"]
+                if (rowData["Computer Lab - Daily Total"] < 0) {
+                  rowData["Computer Lab - Daily Total"] = saveData[i]["Computer Lab"];
+                }
                 rowData["Computer Lab - Unique Head Count"] = rowData["Computer Lab - Daily Total"]/2
+
+
                 saveData[i+1]["Gate Count - Daily Total"] = rowData["Gate Count:"] - saveData[i+1]["Gate Count:"]
+                if (saveData[i+1]["Gate Count - Daily Total"] < 0) {
+                  saveData[i+1]["Gate Count - Daily Total"] = rowData["Gate Count:"];
+                }
                 saveData[i+1]["Gate Count - Unique Head Count"] = saveData[i+1]["Gate Count - Daily Total"]/2
+
                 saveData[i+1]["Computer Lab - Daily Total"] = rowData["Computer Lab"] - saveData[i+1]["Computer Lab"]
+                if (saveData[i+1]["Computer Lab - Daily Total"] < 0) {
+                  saveData[i+1]["Computer Lab - Daily Total"] = rowData["Computer Lab"];
+                }
                 saveData[i+1]["Computer Lab - Unique Head Count"] = saveData[i+1]["Computer Lab - Daily Total"]/2
                 saveData.splice(i + 1, 0, rowData);  // Insert the new element between i and i+1
                 break;
@@ -861,13 +912,12 @@ function exportReport() {
         wsGateCountSummary.addRow(item);
     });
     let lastRow = wsGateCountSummary.lastRow
-    console.log(lastRow)
+
     // Assign the formula to column C starting from row 2
     for (let row = 2; row <= lastRow.number - 1; row++) {
-      wsGateCountSummary.getCell(`C${row}`).value = { formula: `B${row + 1}-B${row}`};
-      console.log(wsGateCountSummary.getCell(`C${row}`).value)
+      wsGateCountSummary.getCell(`C${row}`).value = { formula: `IF(B${row + 1}-B${row}<0,B${row + 1},B${row + 1}-B${row})`};
       wsGateCountSummary.getCell(`D${row}`).value = { formula: `C${row}/2`};
-      wsGateCountSummary.getCell(`G${row}`).value = { formula: `F${row + 1}-F${row}`};
+      wsGateCountSummary.getCell(`G${row}`).value = { formula: `IF(F${row + 1}-F${row}<0,F${row + 1},F${row + 1}-F${row})`};
       wsGateCountSummary.getCell(`H${row}`).value = { formula: `G${row}/2`};
     }
 
@@ -1359,10 +1409,10 @@ function initializeRovingCountPage() {
         document.getElementById("computer-lab-chart")) {
 
         groupRovingData();
-        generateTable("study-room-chart", computerLabAvgHeadCounts);
+        generateTable("study-room-chart", studyRoomAvgHeadCounts);
         generateTable("group-table-chart", groupTablesAvgHeadCounts);
         generateTable("study-carrel-chart", studyCarrelsAvgHeadCounts);
-        generateTable("computer-lab-chart", studyRoomAvgHeadCounts);
+        generateTable("computer-lab-chart", computerLabAvgHeadCounts);
     } //else initializeRovingCountPage()
 
 }
@@ -1910,7 +1960,10 @@ function loadCharts(chartName) {
                     tooltip: {
                         callbacks: {
                             label: function(tooltipItem) {
-                                return trimString(typeOfFacilitativeInquiry[tooltipItem.dataIndex], 40) + ': ' + tooltipItem.raw + '%';
+                                 if(tooltipItem.dataIndex < typeOfFacilitativeInquiry.length)
+                                        return trimString(typeOfFacilitativeInquiry[tooltipItem.dataIndex], 40) + ': ' + tooltipItem.raw + '%';
+                                 else
+                                        return 'Other: ' + tooltipItem.raw + '%';
                             },
                             title: function() {
                                return ''; // Clear the title part of the tooltip
