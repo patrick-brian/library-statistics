@@ -132,11 +132,10 @@ function handleFileUpload(event) {
 			rovingTable = createTable(rovingHeaders, rovingData, '#roving-data-table');
             gateCountTable = createTable(gateCountHeaders, gateCountData, '#gate-count-data-table');
 			inquiryTable = createTable(typeOfInquiryDataHeaders, typeOfInquiryData, '#type-of-inquiry-data-table');
-
             if (tableName === "#reference-stats-data-table") calculateReference()
             else if (tableName === "#roving-data-table") initializeRovingCountPage()
             else if (tableName === "#gate-count-data-table") initializeGateCountPage()
-
+            loadDashBoard()
         };
         reader.readAsBinaryString(file);
 
@@ -1311,7 +1310,6 @@ function setActiveTab(selectedTab) {
         let fileToLoad = "";
         // Define the content for each module
         let content = "";
-
         switch (selectedTab.innerText) {
             case 'Dashboard':
                 fileToLoad = "modules/dashboard-module.html";
@@ -1367,12 +1365,7 @@ function setActiveTab(selectedTab) {
 
         setTimeout(function () {
             if(selectedTab.innerText === "Dashboard") {
-                loadCharts("facilitative-chart")
-                loadCharts("reference-chart")
-                loadCharts("digital-support-chart")
-                loadCharts("loanable-tech-chart")
-                loadCharts("availability-chart")
-                loadCharts("patron-program-chart")
+                loadDashBoard()
             } else {
                 createTable(headers, data, tableName);
                 if(selectedTab.innerText == "Gate Count") initializeGateCountPage()
@@ -1390,6 +1383,39 @@ function setActiveTab(selectedTab) {
         selectedTab.classList.add('active');
 
     }
+}
+function loadDashBoard() {
+
+    let chartData = [];
+    chartData = filterData("Type of Facilitative Inquiry:", typeOfFacilitativeInquiry.concat("Other"))
+    loadCharts("facilitative-chart", chartData)
+    chartData = filterData("Type of Reference:", typeOfReference.concat("Other"))
+    loadCharts("reference-chart", chartData)
+    chartData = filterData("Type of  Digital Support Inquiry:", typeOfDigitalSupportInquiry.concat("Other"))
+    loadCharts("digital-support-chart", chartData)
+    chartData = filterData("Technology Item Type:", technologyType)
+    loadCharts("loanable-tech-chart", chartData)
+    chartData = filterData("Technology Item Type:", technologyType)
+    loadCharts("availability-chart", chartData)
+    chartData = filterData("Technology Item Type:", technologyType)
+    loadCharts("patron-program-chart", chartData)
+
+}
+
+function filterData(key, items) {
+    // Step 1: Calculate the total count of all items
+    const totalCount = items.reduce((total, item) => {
+        return total + refStats.filter(record => record[key] === item).length;
+    }, 0);
+
+    // Step 2: Calculate individual counts and adjust them as percentages of the total
+    return items.map(item => {
+        const count = refStats.filter(record => record[key] === item).length;
+        const percentage = totalCount > 0 ? (count / totalCount) * 100 : 0;  // Prevent division by zero
+        return {
+            [item]: percentage
+        };
+    });
 }
 
 function initializeGateCountPage() {
@@ -1901,21 +1927,23 @@ function shortenListTo10Chars(arr) {
     });
 }
 
-function loadCharts(chartName) {
+function loadCharts(chartName, keys) {
+    //console.log(keys)
     // Enable Chart.js plugin for datalabels
-    let mainChart1 = document.getElementById(chartName)
-    let ctx;
-    let myChart = null;
-    if(mainChart1) {
 
+    let mainChart1 = document.getElementById(chartName)
+    let ctx = null;
+    let chartLabels = keys.map(obj => Object.keys(obj)[0])
+    let filteredData = keys.map(obj => Object.values(obj)[0])
+    if(mainChart1) {
         ctx = mainChart1.getContext("2d");
 
         // Sample data for the courses and percentages
-        const data = {
-            labels: shortenListTo10Chars(typeOfFacilitativeInquiry).concat('Other   '),  // Y-axis labels (courses)
+        let data = {
+            labels: shortenListTo10Chars(chartLabels),  // Y-axis labels (courses)
             datasets: [{
                 label: 'Course Percentage',
-                data: [85, 92, 74, 61, 10, 10, 10 ,10 ,10 ,10 ,10, 10], // X-axis values (percentages)
+                data: filteredData, // X-axis values (percentages)
                 backgroundColor: '#006ac3', // Bar color
                 borderColor: '#006ac3', // Border color
                 borderWidth: 1
@@ -1924,7 +1952,7 @@ function loadCharts(chartName) {
 
 
         // Configuration for the chart
-        const config = {
+        let config = {
             type: 'bar',
             data: data,
             options: {
@@ -1960,10 +1988,13 @@ function loadCharts(chartName) {
                     tooltip: {
                         callbacks: {
                             label: function(tooltipItem) {
-                                 if(tooltipItem.dataIndex < typeOfFacilitativeInquiry.length)
-                                        return trimString(typeOfFacilitativeInquiry[tooltipItem.dataIndex], 40) + ': ' + tooltipItem.raw + '%';
+                                // Ensure the raw value is a number and format it to 1 decimal place
+                                const value = tooltipItem.raw;
+                                const formattedValue = value !== null && !isNaN(value) ? value.toFixed(1) : value;
+                                 if(tooltipItem.dataIndex < keys.length)
+                                        return trimString(chartLabels[tooltipItem.dataIndex], 40) + ': ' + formattedValue + '%';
                                  else
-                                        return 'Other: ' + tooltipItem.raw + '%';
+                                        return 'Other: ' + formattedValue + '%';
                             },
                             title: function() {
                                return ''; // Clear the title part of the tooltip
@@ -1974,7 +2005,7 @@ function loadCharts(chartName) {
                     datalabels: {
                         color: (context) => {
                             const value = context.dataset.data[context.dataIndex];
-                            return value > 50 ? '#fff' : '#000'; // White font for values > 50%, black for others
+                            return value > 25 ? '#fff' : '#000'; // White font for values > 50%, black for others
                         },
                         font: {
                             weight: "bold",
@@ -1987,21 +2018,21 @@ function loadCharts(chartName) {
                         // Positioning logic for labels based on value
                         anchor: (context) => {
                             const value = context.dataset.data[context.dataIndex];
-                            return value > 50 ? 'center' : 'end'; // 'center' for inside, 'end' for outside
+                            return value > 25 ? 'center' : 'end'; // 'center' for inside, 'end' for outside
                         },
                         align: (context) => {
                             const value = context.dataset.data[context.dataIndex];
-                            return value > 50 ? 'center' : 'start'; // 'center' for inside, 'start' for outside
+                            return value > 25 ? 'center' : 'start'; // 'center' for inside, 'start' for outside
                         },
                         // Adjust label position based on the value (use offset for outside)
                         offset: (context) => {
                             const value = context.dataset.data[context.dataIndex];
-                            return value > 50 ? 0 : -40; // No offset inside, offset 10px outside
+                            return value > 25 ? 0 : -40; // No offset inside, offset 10px outside
                         },
                         // Use position to force the label inside or outside based on the value
                         position: (context) => {
                             const value = context.dataset.data[context.dataIndex];
-                            return value > 50 ? 'inside' : 'outside'; // 'inside' for > 50%, 'outside' for <= 50%
+                            return value > 25 ? 'inside' : 'outside'; // 'inside' for > 50%, 'outside' for <= 50%
                         }
                     }
 
@@ -2009,8 +2040,8 @@ function loadCharts(chartName) {
             }
         };
 
-        if(myChart) myChart.destroy()
-        myChart = new Chart(ctx, config);
+        new Chart(ctx, config);
+
     } //else loadCharts()
 }
 let refStatsHeaders = ['Submission ID', 'Submitted', 'Method of Inquiry:', 'Type of Inquiry:', 'Type of Reference:', 'Type of Facilitative Inquiry:',
