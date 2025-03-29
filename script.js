@@ -2054,12 +2054,7 @@ function loadCharts(chartName, keys) {
                 scales: {
                     x: {
                         beginAtZero: true, // Ensures the X-axis starts at 0
-                        ticks: {
-                            callback: function(value) {
 
-                                return value + '%'; // Adding percentage symbol on X-axis
-                            }
-                        },
                         grid: {
                             display: false // This removes the y-axis grid lines
                         }
