@@ -1421,6 +1421,7 @@ function setActiveTab(selectedTab) {
         }
 
         setTimeout(function () {
+            createTable(headers, data, tableName);
             if(selectedTab.innerText === "Dashboard") {
                 loadDashBoard()
             } else {
@@ -1429,7 +1430,7 @@ function setActiveTab(selectedTab) {
                 else if (selectedTab.innerText == "Roving Count") initializeRovingCountPage()
                 else if(selectedTab.innerText == "KC Library Ref Stats") calculateReference()
             }
-            createTable(headers, data, tableName);
+
         }, 100)
         // Remove active class from all tabs
         const tabs = document.querySelectorAll('.side-tab ul li');
