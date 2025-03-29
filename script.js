@@ -1,13 +1,13 @@
 // Load the 'gate-count-module' content immediately on page load
 window.onload = function() {
   Chart.register(ChartDataLabels);
-  setActiveTab(document.getElementById('dashboard')); // Set the second tab as active by default
+  /*setActiveTab(document.getElementById('dashboard')); // Set the second tab as active by default
   setActiveTab(document.getElementById('referencestats')); // Set the second tab as active by default
   setActiveTab(document.getElementById('gateCountTab')); // Set the second tab as active by default
   setActiveTab(document.getElementById('rovingCountTab')); // Set the second tab as active by default
   setTimeout(function () {
     setActiveTab(document.getElementById('dashboard')); // Set the second tab as active by default
-  }, 100)
+  }, 100)*/
 
   while (currentTime <= 19.5) {
       let hour = Math.floor(currentTime);
@@ -25,11 +25,13 @@ window.onload = function() {
 };
 
 // Function to handle the file upload and data conversion
-function handleFileUpload(event) {
-    const file = event.target.files[0];
+function loadFile(file) {
+   // const file = event.target.files[0];
     if (file) {
+
         const reader = new FileReader();
         reader.onload = function(e) {
+
             const data = e.target.result;
 
             // Parse the Excel file
@@ -43,7 +45,7 @@ function handleFileUpload(event) {
 
             // Convert the sheet data to JSON, using the first row as headers
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
+            console.log(jsonData)
             convertExcelDates(jsonData.slice(1))
 
             // Display the JSON data as a list
@@ -132,10 +134,14 @@ function handleFileUpload(event) {
 			rovingTable = createTable(rovingHeaders, rovingData, '#roving-data-table');
             gateCountTable = createTable(gateCountHeaders, gateCountData, '#gate-count-data-table');
 			inquiryTable = createTable(typeOfInquiryDataHeaders, typeOfInquiryData, '#type-of-inquiry-data-table');
-            if (tableName === "#reference-stats-data-table") calculateReference()
+            /*if (tableName === "#reference-stats-data-table") calculateReference()
             else if (tableName === "#roving-data-table") initializeRovingCountPage()
-            else if (tableName === "#gate-count-data-table") initializeGateCountPage()
-            loadDashBoard()
+            else if (tableName === "#gate-count-data-table") initializeGateCountPage()*/
+            //loadDashBoard()
+            //console.log(tableName)
+           // setTimeout(function () {
+                setActiveTab(document.getElementById('dashboard'));
+               // },100);
         };
         reader.readAsBinaryString(file);
 
@@ -1299,9 +1305,9 @@ function sortByIdDescending(data) {
 }
 
 // Function to trigger the file input dialog
-function triggerFileInput() {
+/*function triggerFileInput() {
     document.getElementById("excel-upload").click();
-}
+}*/
 
 // Function to toggle the active class when a tab is clicked
 function setActiveTab(selectedTab) {
@@ -2123,4 +2129,48 @@ let times = [];
 let currentTime = 7.5; // 7:30 AM in 24-hour format
 
 let activetab;
+
+
+
+        // Function to trigger the hidden file input when the "Upload" button is clicked
+        function triggerFileInput() {
+            document.getElementById("file-input").click();
+        }
+
+        // Function to handle the file upload
+        function handleFileUpload() {
+            const fileInput = document.getElementById("file-input");
+            const file = fileInput.files[0];
+
+            const fileNameDisplay = document.getElementById("file-name");
+
+            if (file) {
+                if (file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || file.type === "application/vnd.ms-excel") {
+                    fileNameDisplay.textContent = `Selected file: ${file.name}`;
+                } else {
+                    fileNameDisplay.textContent = "Please upload a valid Excel file.";
+                }
+            } else {
+                fileNameDisplay.textContent = "No file selected. Please choose a file.";
+            }
+        }
+
+        // Function to handle the submit action
+        function submitFile() {
+            const fileInput = document.getElementById("file-input");
+            const file = fileInput.files[0];
+            const popupContainer = document.getElementById("popup-container");
+            const sideTab = document.getElementById("side-tab")
+            if (file) {
+                // Hide the popup and show the background
+                popupContainer.style.display = "none";
+                sideTab.style.visibility = "visible";
+                loadFile(file);
+            } else {
+                alert("No file selected. Please upload a file before submitting.");
+            }
+        }
+
+        // Event listener for file selection (optional)
+        document.getElementById("file-input").addEventListener('change', handleFileUpload);
 
