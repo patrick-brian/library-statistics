@@ -19,7 +19,7 @@ html, body {
 }
 
 .card-container {
-    height: calc(60% - 5px);
+    height: calc(105% - 10px);
     border-radius: 5px;
 }
 
@@ -37,7 +37,7 @@ table {
 	border-collapse: collapse;
 	padding: 5px;
 	text-align: center;
-	font-size: 0.76em;
+	font-size: 0.888em;
 }
 
 th, td {

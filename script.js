@@ -941,6 +941,18 @@ function exportReport() {
         wsRefStats.addRow(item);
     });
 
+    const wsGateCount = workbook.addWorksheet('Gate Count');
+    wsGateCount.columns = [
+        { header: 'Submitted', key: 'Submitted', width: 22},
+        { header: 'Gate Count', key: 'Gate Count:', width: 22},
+        { header: 'Computer Lab', key: 'Computer Lab', width: 22},
+        { header: 'Subject(s) of Inquiry', key: 'Subject(s) of Inquiry:', width: 22},
+        { header: 'Additional Information', key: 'Additional Information:', width: 22}
+    ];
+    gateCountData.forEach(item => {
+        wsGateCount.addRow(item);
+    });
+
     // Create the second worksheet 'Gate Count Summary'
     const wsGateCountSummary = workbook.addWorksheet('Gate Count Summary');
     wsGateCountSummary.columns = [
@@ -1224,7 +1236,7 @@ function exportReport() {
     wsGateCountSummary.insertRow(lastRow.number + 11, ['','', 'Increase / Decrease:', changeText]);
 
     // Apply styles to the first row (header) for all sheets
-    [wsRefStats, wsGateCountSummary, wsRoving].forEach(sheet => {
+    [wsRefStats, wsGateCount, wsGateCountSummary, wsRoving].forEach(sheet => {
         const headerRow = sheet.getRow(1);
         headerRow.eachCell((cell, colNumber) => {
             const value = cell.value ? cell.value.toString() : '';
@@ -1233,11 +1245,7 @@ function exportReport() {
             cell.alignment.wrapText = true; // Enable text wrapping
         });
 
-        // Enable filter for the header row
-        sheet.autoFilter = {
-            from: { row: 1, column: 1 }, // Enable autofilter for the whole header row (row 1)
-            to: { row: 1, column: sheet.columnCount } // End at the last column
-        };
+
 
         // Freeze the top row (header)
         sheet.views = [
@@ -1249,8 +1257,14 @@ function exportReport() {
         ];
     });
 
+    // Enable filter for the header row
+    wsRefStats.autoFilter = {
+        from: { row: 1, column: 1 }, // Enable autofilter for the whole header row (row 1)
+        to: { row: 1, column: wsRefStats.columnCount } // End at the last column
+    };
+
     // Apply auto column width for each worksheet
-    [wsRefStats, wsGateCountSummary, wsRoving].forEach((worksheet) => {
+    [wsRefStats, wsGateCount, wsGateCountSummary, wsRoving].forEach((worksheet) => {
         worksheet.columns.forEach(column => {
             if (column.width > 10) {
                 column.eachCell({ includeEmpty: true }, (cell, rowNumber) => {
