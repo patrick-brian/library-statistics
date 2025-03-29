@@ -45,7 +45,6 @@ function loadFile(file) {
 
             // Convert the sheet data to JSON, using the first row as headers
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            console.log(jsonData)
             convertExcelDates(jsonData.slice(1))
 
             // Display the JSON data as a list
@@ -129,11 +128,57 @@ function loadFile(file) {
 			loanableTechData = newData.filter(item =>
 			   item["Type of Inquiry:"] == "Loanable Tech"
 			)
-			rawTable = createTable(refStatsHeaders, refStats, '#reference-stats-data-table')
+
+			// Helper function to capitalize the first letter of each word
+            function capitalizeWords(str) {
+                return str.replace(/\b\w/g, (char) => char.toUpperCase());
+            }
+
+            distinctiveInquiryData = [
+                ...new Set(
+                    newData
+                        .filter(item =>
+                            item["Type of Inquiry:"] !== "" &&
+                            item["Type of Inquiry:"] !== "Gate Count" &&
+                            item["Type of Inquiry:"] !== "Roving" &&
+                            (item["Additional Information:"]?.trim() !== '' || item["Subject(s) of Inquiry:"]?.trim() !== '')
+                        )
+                        .map(item => {
+                            // Choose the non-empty value between "Additional Information:" and "Subject(s) of Inquiry:"
+                            const inquiryType = item["Type of Inquiry:"];
+                            const inquiry = item["Additional Information:"]?.trim() || item["Subject(s) of Inquiry:"]?.trim();
+                            return { "Type": inquiryType, "Inquiry": inquiry };
+                        })
+                )
+            ];
+
+            // Remove case-sensitive duplicates
+            distinctiveInquiryData = [
+                ...new Set(
+                    distinctiveInquiryData.map(item => `${item.Type.toLowerCase()}-${item.Inquiry.toLowerCase()}`)
+                )
+            ].map(item => {
+                // Extract the original objects back from the unique string
+                const [type, inquiry] = item.split('-');
+                return { "Type": type, "Inquiry": inquiry };
+            });
+
+            // Capitalize the first letter of each word in Type and Inquiry fields
+            distinctiveInquiryData = distinctiveInquiryData.map(item => ({
+                "Type": capitalizeWords(item.Type),
+                "Inquiry": capitalizeWords(item.Inquiry)
+            }));
+
+
+
+            console.log(distinctiveInquiryData)
+
+			/*rawTable = createTable(refStatsHeaders, refStats, '#reference-stats-data-table')
 			techTable = createTable(loanableTechHeaders, loanableTechData, '#loanable-tech-data-table');
 			rovingTable = createTable(rovingHeaders, rovingData, '#roving-data-table');
             gateCountTable = createTable(gateCountHeaders, gateCountData, '#gate-count-data-table');
-			inquiryTable = createTable(typeOfInquiryDataHeaders, typeOfInquiryData, '#type-of-inquiry-data-table');
+			//inquiryTable = createTable(typeOfInquiryDataHeaders, typeOfInquiryData, '#type-of-inquiry-data-table');
+			distinctiveInquiryTable = createTable(typeOfInquiryDataHeaders, typeOfInquiryData, '#distinctive-inquiries-data-table');*/
             /*if (tableName === "#reference-stats-data-table") calculateReference()
             else if (tableName === "#roving-data-table") initializeRovingCountPage()
             else if (tableName === "#gate-count-data-table") initializeGateCountPage()*/
@@ -185,6 +230,7 @@ function handleDuplicates(list) {
 }
 
 function createTable(headers, data, tableName){
+
     let table = $(tableName).DataTable()
     let pageInfo = table.page.info()
     let currentPage = pageInfo !== undefined ? pageInfo.page : 0;
@@ -198,6 +244,7 @@ function createTable(headers, data, tableName){
             data: item
         })
     );
+
 
     tableColumns.push({ data: null });
 
@@ -218,7 +265,7 @@ function createTable(headers, data, tableName){
       scrollValue = 215;
     } else if (tableName === "#gate-count-data-table") {
       scrollValue = 500;
-    }
+    } else scrollValue = 650
 
 	dataTable = new DataTable(tableName, {
         data: data,
@@ -226,7 +273,7 @@ function createTable(headers, data, tableName){
         pageLength: 100,
         scrollX: false,
         scrollY: scrollValue,
-        paging: true,
+        paging: tableName === "#distinctive-inquiries-data-table" ? false : true,
         columns: tableColumns,
         columnDefs: [{
             "targets": "_all",  // Disable sorting on Name and Country columns
@@ -234,6 +281,7 @@ function createTable(headers, data, tableName){
         }, {
             targets: -1, // Target the last column
             data: null, // Do not use any data for the delete button
+            visible: tableName === "#distinctive-inquiries-data-table" ? false : true,
             render: function(data, type, row, meta) {
 
                 let buttons = `<div style="display: flex; gap: 5px;">`;
@@ -1319,6 +1367,9 @@ function setActiveTab(selectedTab) {
         switch (selectedTab.innerText) {
             case 'Dashboard':
                 fileToLoad = "modules/dashboard-module.html";
+                tableName = "#distinctive-inquiries-data-table"
+                headers = ["Type", "Inquiry"],
+                data = distinctiveInquiryData
                 break;
             case 'KC Library Ref Stats':
                 fileToLoad = "modules/reference-stats-module.html";
@@ -1373,11 +1424,12 @@ function setActiveTab(selectedTab) {
             if(selectedTab.innerText === "Dashboard") {
                 loadDashBoard()
             } else {
-                createTable(headers, data, tableName);
+
                 if(selectedTab.innerText == "Gate Count") initializeGateCountPage()
                 else if (selectedTab.innerText == "Roving Count") initializeRovingCountPage()
                 else if(selectedTab.innerText == "KC Library Ref Stats") calculateReference()
             }
+            createTable(headers, data, tableName);
         }, 100)
         // Remove active class from all tabs
         const tabs = document.querySelectorAll('.side-tab ul li');
@@ -1390,6 +1442,7 @@ function setActiveTab(selectedTab) {
 
     }
 }
+
 function loadDashBoard() {
 
     let chartData = [];
@@ -1402,24 +1455,37 @@ function loadDashBoard() {
     chartData = filterData("Technology Item Type:", technologyType)
     loadCharts("loanable-tech-chart", chartData)
     chartData = filterData("Technology Item Type:", technologyType)
-    loadCharts("availability-chart", chartData)
-    chartData = filterData("Technology Item Type:", technologyType)
+    availabilityChart("availability-chart", chartData)
+    chartData = filterData("Student's Program", programs)
     loadCharts("patron-program-chart", chartData)
 
 }
 
 function filterData(key, items) {
     // Step 1: Calculate the total count of all items
-    const totalCount = items.reduce((total, item) => {
+    /*const totalCount = items.reduce((total, item) => {
         return total + refStats.filter(record => record[key] === item).length;
-    }, 0);
+    }, 0);*/
 
     // Step 2: Calculate individual counts and adjust them as percentages of the total
     return items.map(item => {
-        const count = refStats.filter(record => record[key] === item).length;
-        const percentage = totalCount > 0 ? (count / totalCount) * 100 : 0;  // Prevent division by zero
+        let count = refStats.filter(record => {
+                      if (key === "Student's Program") {
+                        return record["Technology Item Type:"] !== "" && record[key].includes(item);  // Use includes() for other keys
+                      } else {
+                        return record[key] === item;  // Use strict equality for "abc"
+                      }
+                    }).length;
+
+        let available = 0;
+        let notAvailable = 0;
+        if(key === "Technology Item Type:") {
+            available = refStats.filter(record => record[key] === item && record["Was Tech available at the time of request?"] === "Yes").length
+            notAvailable = refStats.filter(record => record[key] === item && record["Was Tech available at the time of request?"] === "No").length
+        }
+        //const percentage = totalCount > 0 ? (count / totalCount) * 100 : 0;  // Prevent division by zero
         return {
-            [item]: percentage
+            [item]: [count, ((available/count) * 100).toFixed(1), (((count-available)/count) * 100).toFixed(1)]
         };
     });
 }
@@ -1934,13 +2000,17 @@ function shortenListTo10Chars(arr) {
 }
 
 function loadCharts(chartName, keys) {
-    //console.log(keys)
     // Enable Chart.js plugin for datalabels
-
     let mainChart1 = document.getElementById(chartName)
     let ctx = null;
+
+    keys.sort((a, b) => {
+          const valueA = Object.values(a)[0][0];
+          const valueB = Object.values(b)[0][0];
+          return valueB - valueA; // Sort in descending order
+        });
     let chartLabels = keys.map(obj => Object.keys(obj)[0])
-    let filteredData = keys.map(obj => Object.values(obj)[0])
+    let filteredData = keys.map(obj => Object.values(obj)[0][0])
     if(mainChart1) {
         ctx = mainChart1.getContext("2d");
 
@@ -1992,13 +2062,14 @@ function loadCharts(chartName, keys) {
                         display: false // Hides the legend
                     },
                     tooltip: {
+
                         callbacks: {
                             label: function(tooltipItem) {
                                 // Ensure the raw value is a number and format it to 1 decimal place
                                 const value = tooltipItem.raw;
-                                const formattedValue = value !== null && !isNaN(value) ? value.toFixed(1) : value;
+                                const formattedValue = value !== null && !isNaN(value) ? value : value;
                                  if(tooltipItem.dataIndex < keys.length)
-                                        return trimString(chartLabels[tooltipItem.dataIndex], 40) + ': ' + formattedValue + '%';
+                                        return trimString(chartLabels[tooltipItem.dataIndex], 40) + ': ' + formattedValue;
                                  else
                                         return 'Other: ' + formattedValue + '%';
                             },
@@ -2018,8 +2089,8 @@ function loadCharts(chartName, keys) {
                             size: 12
                         },
                         formatter: (value) => {
-                            let percentage = ((value / 100) * 100).toFixed(1);
-                            return `${percentage}%`; // Display percentage
+
+                            return `${value}`; // Display percentage
                         },
                         // Positioning logic for labels based on value
                         anchor: (context) => {
@@ -2050,6 +2121,152 @@ function loadCharts(chartName, keys) {
 
     } //else loadCharts()
 }
+
+function availabilityChart (chartName, keys) {
+    var ctx = document.getElementById(chartName).getContext('2d');
+    keys.sort((a, b) => {
+              const valueA = Object.values(a)[0][0];
+              const valueB = Object.values(b)[0][0];
+              return valueB - valueA; // Sort in descending order
+            });
+        let chartLabels = keys.map(obj => Object.keys(obj)[0])
+        let filteredData = keys.map(obj => Object.values(obj)[0])
+        let availableTech = keys.map(obj => Object.values(obj)[0][1])
+        let notAvailableTech = keys.map(obj => Object.values(obj)[0][2])
+    var data = {
+        labels: chartLabels, // Categories
+        datasets: [
+
+            {
+                label: 'Available',
+                data: availableTech, // Yes percentages for each category
+                backgroundColor: '#006ac3', // Color for Yes
+                borderColor: '#006ac3',
+                borderWidth: 1
+            },{
+                label: 'Not Available',
+                data: notAvailableTech, // No percentages for each category
+                backgroundColor: '#505050', // Color for No
+                borderColor: '#505050',
+                borderWidth: 1
+            }
+        ]
+    };
+
+    var options = {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false // Hides the legend
+            },
+            tooltip: {
+                //position: 'nearest',
+                xAlign: 'center', // Align horizontally in the center
+                yAlign: 'top', // Align horizontally in the center
+                callbacks: {
+                    label: function(tooltipItem) {
+                        var value = tooltipItem.raw;
+
+                        return tooltipItem.dataset.label + ': ' + value + '%';
+                    }
+                }
+            },
+            datalabels: {
+                color: '#fff',
+                font: {
+                    weight: "bold",
+                    size: 12
+                },
+                formatter: (value) => {
+                    if (value > 0) {
+                        return `${value}%`; // Display percentage if value is greater than 0
+                      }
+                      return '';
+                },
+                // Positioning logic for labels based on value
+               /* anchor: (context) => {
+                    const value = context.dataset.data[context.dataIndex];
+                    return value > 25 ? 'center' : 'end'; // 'center' for inside, 'end' for outside
+                },*/
+                /*align: (context) => {
+                    const value = context.dataset.data[context.dataIndex];
+                    return value > 25 ? 'center' : 'start'; // 'center' for inside, 'start' for outside
+                },*/
+                // Adjust label position based on the value (use offset for outside)
+                /*offset: (context) => {
+                    const value = context.dataset.data[context.dataIndex];
+                    return value > 25 ? 0 : -5; // No offset inside, offset 10px outside
+                },*/
+                // Use position to force the label inside or outside based on the value
+                /*position: (context) => {
+                    const value = context.dataset.data[context.dataIndex];
+                    return value > 25 ? 'inside' : 'outside'; // 'inside' for > 50%, 'outside' for <= 50%
+                }*/
+            }
+        },
+        scales: {
+            x: {
+                stacked: true, // Stack bars vertically
+                beginAtZero: true,
+                //max: 100, // Since it's percentage, the maximum is 100
+            },
+            y: {
+                stacked: true, // Stack bars vertically
+            }
+        }
+    };
+
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: data,
+        options: options
+    });
+
+}
+
+// Function to trigger the hidden file input when the "Upload" button is clicked
+function triggerFileInput() {
+    document.getElementById("file-input").click();
+}
+
+// Function to handle the file upload
+function handleFileUpload() {
+    const fileInput = document.getElementById("file-input");
+    const file = fileInput.files[0];
+
+    const fileNameDisplay = document.getElementById("file-name");
+
+    if (file) {
+        if (file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || file.type === "application/vnd.ms-excel" || file.type === "text/csv") {
+            fileNameDisplay.textContent = `Selected file: ${file.name}`;
+        } else {
+            fileNameDisplay.textContent = "Please upload a valid Excel file.";
+        }
+    } else {
+        fileNameDisplay.textContent = "No file selected. Please choose a file.";
+    }
+}
+
+// Function to handle the submit action
+function submitFile() {
+    const fileInput = document.getElementById("file-input");
+    const file = fileInput.files[0];
+    const popupContainer = document.getElementById("popup-container");
+    const sideTab = document.getElementById("side-tab")
+    if (file) {
+        // Hide the popup and show the background
+        popupContainer.style.display = "none";
+        sideTab.style.visibility = "visible";
+        loadFile(file);
+    } else {
+        alert("No file selected. Please upload a file before submitting.");
+    }
+}
+
+// Event listener for file selection (optional)
+document.getElementById("file-input").addEventListener('change', handleFileUpload);
+
 let refStatsHeaders = ['Submission ID', 'Submitted', 'Method of Inquiry:', 'Type of Inquiry:', 'Type of Reference:', 'Type of Facilitative Inquiry:',
                 'Type of  Digital Support Inquiry:', 'Technology Item Type:', 'Software/Application Type:', "Student's Program", 'Year of Program',
                 'Was Tech available at the time of request?', 'Subject(s) of Inquiry:', 'Additional Information:']
@@ -2096,6 +2313,15 @@ let technologyType = [
     "Calculator", "Camera", "Charger, Adapter, etc.", "Chromebooks", "Chromecast", "DVD Player", "Headphones", "Keyboard", "Laptops", "MFA Token", "Power Bank", "Projector", "SAD Light", "WebCam", "WIreless Mouse"
 ]
 
+let programs = [
+    "Academic Foundations", "Child Care", "Business",
+    "College Preparation",
+    "Educational Assistant Certificate (EA)", "English For Academic Purposes", "Environmental Technology",
+    "General Arts", "General Science", "Governance & Civil Studies", "Health Care Aide", "LINC",
+    "Open Studies", "Paramedic", "Practical Nurse", "Power Engineering", "Social Work", "Trades", "UT"
+]
+
+let distinctiveInquiryData = [];
 let adding = false;
 let editing = false;
 let tableHeaders;
@@ -2132,45 +2358,5 @@ let activetab;
 
 
 
-        // Function to trigger the hidden file input when the "Upload" button is clicked
-        function triggerFileInput() {
-            document.getElementById("file-input").click();
-        }
 
-        // Function to handle the file upload
-        function handleFileUpload() {
-            const fileInput = document.getElementById("file-input");
-            const file = fileInput.files[0];
-
-            const fileNameDisplay = document.getElementById("file-name");
-
-            if (file) {
-                if (file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || file.type === "application/vnd.ms-excel") {
-                    fileNameDisplay.textContent = `Selected file: ${file.name}`;
-                } else {
-                    fileNameDisplay.textContent = "Please upload a valid Excel file.";
-                }
-            } else {
-                fileNameDisplay.textContent = "No file selected. Please choose a file.";
-            }
-        }
-
-        // Function to handle the submit action
-        function submitFile() {
-            const fileInput = document.getElementById("file-input");
-            const file = fileInput.files[0];
-            const popupContainer = document.getElementById("popup-container");
-            const sideTab = document.getElementById("side-tab")
-            if (file) {
-                // Hide the popup and show the background
-                popupContainer.style.display = "none";
-                sideTab.style.visibility = "visible";
-                loadFile(file);
-            } else {
-                alert("No file selected. Please upload a file before submitting.");
-            }
-        }
-
-        // Event listener for file selection (optional)
-        document.getElementById("file-input").addEventListener('change', handleFileUpload);
 
