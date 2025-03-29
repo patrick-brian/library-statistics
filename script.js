@@ -977,12 +977,13 @@ function exportReport() {
         wsGateCountSummary.addRow(item);
     });
     let lastRow = wsGateCountSummary.lastRow
-
+    let nextRow = 0
     // Assign the formula to column C starting from row 2
-    for (let row = 2; row <= lastRow.number - 1; row++) {
-      wsGateCountSummary.getCell(`C${row}`).value = { formula: `IF(B${row + 1}-B${row}<0,B${row + 1},B${row + 1}-B${row})`};
+    for (let row = 2; row <= lastRow.number; row++) {
+      nextRow = row === lastRow.number ? row + 2 : row + 1
+      wsGateCountSummary.getCell(`C${row}`).value = { formula: `IF(B${nextRow}-B${row}<0,B${nextRow},B${nextRow}-B${row})`};
       wsGateCountSummary.getCell(`D${row}`).value = { formula: `C${row}/2`};
-      wsGateCountSummary.getCell(`G${row}`).value = { formula: `IF(F${row + 1}-F${row}<0,F${row + 1},F${row + 1}-F${row})`};
+      wsGateCountSummary.getCell(`G${row}`).value = { formula: `IF(F${nextRow}-F${row}<0,F${nextRow},F${nextRow}-F${row})`};
       wsGateCountSummary.getCell(`H${row}`).value = { formula: `G${row}/2`};
     }
 
@@ -1233,8 +1234,9 @@ function exportReport() {
         gateCountAverageDay.getCell(8).numFmt = '0.00';
     wsGateCountSummary.insertRow(lastRow.number + 9, ['', '', 'Year Over Year Comparison']);
     wsGateCountSummary.insertRow(lastRow.number + 10, ['','', 'Last year', lastYear]);
-    wsGateCountSummary.insertRow(lastRow.number + 11, ['','', 'Increase / Decrease:', changeText]);
-
+    let changeRow = wsGateCountSummary.insertRow(lastRow.number + 11, ['','', 'Increase / Decrease:', '']);
+        changeRow.getCell(4).value = { formula: `ABS(ROUND(((D${lastRow.number + 5} - D${lastRow.number + 10}) / D${lastRow.number + 10}) * 100, 0)) & "% " & IF(((D${lastRow.number + 5} - D${lastRow.number + 10}) / D${lastRow.number + 10}) > 0, "Increase", IF(((D${lastRow.number + 5} - D${lastRow.number + 10}) / D${lastRow.number + 10}) < 0, "Decrease", "No Change"))` };
+        changeRow.getCell(4).alignment = { horizontal: 'right'};
     // Apply styles to the first row (header) for all sheets
     [wsRefStats, wsGateCount, wsGateCountSummary, wsRoving].forEach(sheet => {
         const headerRow = sheet.getRow(1);

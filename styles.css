@@ -201,32 +201,14 @@ th, td {
 	text-align: center !important;
 }
 
-th {
-	border-left: none;
-	border-top: none;
-	height: 20%;
-}
+
 
 table.dataTable thead th {
     border-bottom: 3px solid black !important; /* Adjust thickness and color */
     padding-bottom: 5px; /* Optional: Adjust spacing */
 }
 
-td:first-child {
-	border-left: none;
-	border-top: none;
 
-}
-
-/* Remove bottom border of the last row */
-tr:last-child td {
-    border-bottom: none;
-}
-
-/* Remove the right border of the last column */
-td:last-child, th:last-child {
-    border-right: none;
-}
 
 .highlighted {
   background-color: #68bbe3 !important; /* Light blue background */
