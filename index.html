@@ -10,37 +10,25 @@
 </head>
 <body>
 <div class="container">
-  <!-- Popup Container (Visible initially) -->
   <div class="popup-container" id="popup-container">
     <div class="popup">
       <h3>Upload Your Excel File</h3>
-      <!-- Hidden file input -->
       <input type="file" id="file-input" class="file-input" accept=".xlsx, .xls, .csv">
       <br>
-      <!-- Upload button which triggers the file input -->
       <button onclick="triggerFileInput()">Upload</button>
-      <!-- Display the selected file name here -->
       <div class="file-name" id="file-name"></div>
       <br>
       <button onclick="submitFile()">Submit</button>
     </div>
   </div>
-  <!-- The side tab (fixed to the left) -->
   <div class="side-tab" id="side-tab">
     <ul>
-      <!--<li>Upload Excel File</li>-->
       <li id="dashboard">Dashboard</li>
-      <!--<li id="referencestats">KC Library Ref Stats</li>
-      <li id="gateCountTab">Gate Count</li>-->
       <li id="rovingCountTab">Roving Count</li>
       <li id="exportExcel" class="export-btn">Export Report</li>
     </ul>
   </div>
 
-  <!-- Hidden file input -->
-  <input type="file" id="excel-upload" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleFileUpload(event)" />
-
-  <!-- Content area to display the selected module's content -->
   <div id="content-area">
   </div>
 </div>

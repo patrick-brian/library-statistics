@@ -1,14 +1,6 @@
 // Load the 'gate-count-module' content immediately on page load
 window.onload = function() {
   Chart.register(ChartDataLabels);
-  /*setActiveTab(document.getElementById('dashboard')); // Set the second tab as active by default
-  setActiveTab(document.getElementById('referencestats')); // Set the second tab as active by default
-  setActiveTab(document.getElementById('gateCountTab')); // Set the second tab as active by default
-  setActiveTab(document.getElementById('rovingCountTab')); // Set the second tab as active by default
-  setTimeout(function () {
-    setActiveTab(document.getElementById('dashboard')); // Set the second tab as active by default
-  }, 100)*/
-
   while (currentTime <= 19.5) {
       let hour = Math.floor(currentTime);
           let minute = (currentTime % 1 === 0.5) ? '30' : '00';
@@ -21,7 +13,6 @@ window.onload = function() {
           times.push(`${formattedHour}:${minute} ${period}`);
           currentTime += 0.5; // Move to next time slot
   }
-
 };
 
 // Function to handle the file upload and data conversion
@@ -169,27 +160,9 @@ function loadFile(file) {
                 "Inquiry": capitalizeWords(item.Inquiry)
             }));
 
-
-
-            console.log(distinctiveInquiryData)
-
-			/*rawTable = createTable(refStatsHeaders, refStats, '#reference-stats-data-table')
-			techTable = createTable(loanableTechHeaders, loanableTechData, '#loanable-tech-data-table');
-			rovingTable = createTable(rovingHeaders, rovingData, '#roving-data-table');
-            gateCountTable = createTable(gateCountHeaders, gateCountData, '#gate-count-data-table');
-			//inquiryTable = createTable(typeOfInquiryDataHeaders, typeOfInquiryData, '#type-of-inquiry-data-table');
-			distinctiveInquiryTable = createTable(typeOfInquiryDataHeaders, typeOfInquiryData, '#distinctive-inquiries-data-table');*/
-            /*if (tableName === "#reference-stats-data-table") calculateReference()
-            else if (tableName === "#roving-data-table") initializeRovingCountPage()
-            else if (tableName === "#gate-count-data-table") initializeGateCountPage()*/
-            //loadDashBoard()
-            //console.log(tableName)
-           // setTimeout(function () {
-                setActiveTab(document.getElementById('dashboard'));
-               // },100);
+            setActiveTab(document.getElementById('dashboard'));
         };
         reader.readAsBinaryString(file);
-
     }
 }
 
@@ -245,9 +218,6 @@ function createTable(headers, data, tableName){
         })
     );
 
-
-    tableColumns.push({ data: null });
-
     // Select all elements with the class 'my-class'
     var elements = document.getElementsByClassName('table-wrapper');
 
@@ -256,72 +226,18 @@ function createTable(headers, data, tableName){
         elements[i].style.backgroundColor = 'white';
     }
 
-    let scrollValue;
-
-
-    if (tableName === "#reference-stats-data-table") {
-      scrollValue = 270;
-    } else if (tableName === "#roving-data-table") {
-      scrollValue = 215;
-    } else if (tableName === "#gate-count-data-table") {
-      scrollValue = 500;
-    } else scrollValue = 650
-
-	dataTable = new DataTable(tableName, {
+   	dataTable = new DataTable(tableName, {
         data: data,
         searching: true,
         pageLength: 100,
         scrollX: false,
-        scrollY: scrollValue,
-        paging: tableName === "#distinctive-inquiries-data-table" ? false : true,
+        scrollY: 650,
+        paging: false,
         columns: tableColumns,
         columnDefs: [{
             "targets": "_all",  // Disable sorting on Name and Country columns
             "orderable": false
-        }, {
-            targets: -1, // Target the last column
-            data: null, // Do not use any data for the delete button
-            visible: tableName === "#distinctive-inquiries-data-table" ? false : true,
-            render: function(data, type, row, meta) {
-
-                let buttons = `<div style="display: flex; gap: 5px;">`;
-
-                // Conditionally show the buttons based on tableName
-                if (tableName === '#gate-count-data-table') {
-                    // Show all buttons (edit, delete, add) for this table
-                    buttons += `
-                        <button onclick='editRow(${JSON.stringify(tableName)}, ${JSON.stringify(meta.row)})'><i class='fas fa-edit'></i></button>
-                        <button onclick='deleteRow(false, ${JSON.stringify(tableName)}, ${JSON.stringify(meta.row)})'><i class='fas fa-trash'></i></button>
-                        <button onclick='addRow(${JSON.stringify(tableName)}, ${JSON.stringify(meta.row)})'><i class='fas fa-plus'></i></button>
-                    `;
-                } else if (tableName === '#roving-data-table') {
-                    // Only show the delete button for this table
-                    buttons += `<button onclick='deleteRow(false, ${JSON.stringify(tableName)}, ${JSON.stringify(meta.row)})'><i class='fas fa-trash'></i></button>`;
-                } else if (tableName === '#reference-stats-data-table') {
-                    // Only show the edit button for this table
-                    buttons += `<button onclick='editRow(${JSON.stringify(tableName)}, ${JSON.stringify(meta.row)})'><i class='fas fa-edit'></i></button>`;
-                }
-
-                buttons += `</div>`;
-                return buttons;
-              }
-        }],
-        footerCallback: function (row, data, start, end, display) {
-            // Create the custom footer row
-            var footerHTML = `
-            <tr>
-            <th></th>
-            <th>Additional Gate Count</th>
-            <th><input type="number" id="input1" inputmode="numeric" placeholder="Enter value" ></th>
-            <th></th>
-            <th>Additional Computer Lab</th>
-            <th><input type="number" id="input2" inputmode="numeric" placeholder="Enter value"></th>
-            <th><button id="calculate" onclick='calculate()'>Calculate</button></th>
-            </tr>
-            `;
-            // Add the row to the footer
-            $('#gate-count-data-table_wrapper tfoot').html(footerHTML);
-        }
+        }]
     })
 
     dataTable.search(currentSearch)
@@ -331,31 +247,6 @@ function createTable(headers, data, tableName){
     dataTable.draw(false);
 
     return dataTable
-}
-
-// Handle Calculate button click
-function calculate(){
-    let tableName = "#gate-count-data-table"
-	addedGateCount = parseFloat($('#input1').val()) || 0;
-	addedComputerLab = parseFloat($('#input2').val()) || 0;
-
-	let scrollPosition = $(tableName).parent().scrollTop();
-
-	gateCountData[0]["Gate Count - Daily Total"] = addedGateCount - gateCountData[0]["Gate Count:"];
-	gateCountData[0]["Gate Count - Unique Head Count"] = gateCountData[0]["Gate Count - Daily Total"]/2;
-	gateCountData[0]["Computer Lab - Daily Total"] = addedComputerLab - gateCountData[0]["Computer Lab"];
-	gateCountData[0]["Computer Lab - Unique Head Count"] = gateCountData[0]["Computer Lab - Daily Total"]/2;
-    setTimeout(function() {
-        createTable(gateCountHeaders, gateCountData, tableName);
-
-        document.getElementById('input1').value = addedGateCount
-        document.getElementById('input2').value = addedComputerLab
-
-        calculateTotals();
-        $(tableName).parent().scrollTop(scrollPosition);
-        },100)
-
-
 }
 
 function convertExcelDates(list) {
@@ -398,376 +289,6 @@ function localizedDate(dateStr) {
         timeZone: 'America/Edmonton'  // Set time zone to Edmonton, Alberta
     };
     return new Intl.DateTimeFormat('en-CA', options).format(date);
-}
-
-// Function to handle the delete action
-function deleteRow(cancelButton, tableName, rowIndex) {
-    let deleteData;
-    let headers;
-
-    if (tableName === '#gate-count-data-table') {
-        deleteData = gateCountData
-        headers = gateCountHeaders
-    } else if (tableName === '#roving-data-table') {
-        deleteData = rovingData
-        headers = rovingHeaders
-    }
-    let table = $(tableName).DataTable();
-    let row = table.row(rowIndex).node()
-    sortByIdDescending(deleteData)
-
-    let scrollPosition = $(tableName).parent().scrollTop();
-    const rows = document.querySelectorAll('tr');
-    rows.forEach(row => row.classList.remove('highlighted'));
-
-    if(cancelButton) createTable(headers, deleteData, tableName);
-    // Confirmation dialog
-    else if (confirm("Are you sure you want to delete Submission = " + row.cells[0].textContent)) {
-        // Get the row's data or submission ID (assuming "Submission ID" is in the first column)
-        // Adjust this if the "Submission ID" is in a different column
-        let submissionID = row.cells[0].textContent;
-        const indexToDelete = deleteData.findIndex(item => item["Submission ID"] === Number(submissionID));
-        if (tableName === '#gate-count-data-table') {
-            if(indexToDelete < deleteData.length - 1 && indexToDelete > 0) {
-                deleteData[indexToDelete+1]["Gate Count - Daily Total"] = deleteData[indexToDelete -1]["Gate Count:"] - deleteData[indexToDelete+1]["Gate Count:"]
-                // If the "Gate Count - Daily Total" is negative, assign the value from the previous "Gate Count"
-                if (deleteData[indexToDelete + 1]["Gate Count - Daily Total"] < 0) {
-                  deleteData[indexToDelete + 1]["Gate Count - Daily Total"] = deleteData[indexToDelete - 1]["Gate Count:"];
-                }
-                deleteData[indexToDelete+1]["Gate Count - Unique Head Count"] = deleteData[indexToDelete +1]["Gate Count - Daily Total"]/2
-
-                deleteData[indexToDelete+1]["Computer Lab - Daily Total"] = deleteData[indexToDelete - 1]["Computer Lab"] - deleteData[indexToDelete+1]["Computer Lab"]
-                // If the "Gate Count - Daily Total" is negative, assign the value from the previous "Gate Count"
-                if (deleteData[indexToDelete + 1]["Computer Lab - Daily Total"] < 0) {
-                  deleteData[indexToDelete + 1]["Computer Lab - Daily Total"] = deleteData[indexToDelete - 1]["Computer Lab"];
-                }
-                deleteData[indexToDelete+1]["Computer Lab - Unique Head Count"] = deleteData[indexToDelete+1]["Computer Lab - Daily Total"]/2
-            }
-        }
-        deleteData.splice(indexToDelete, 1)
-        createTable(headers, deleteData, tableName);
-    } else row.classList.remove('highlighted');
-
-    if (tableName === '#roving-data-table') initializeRovingCountPage()
-    $(tableName).parent().scrollTop(scrollPosition);
-    calculateTotals()
-}
-
-// Function to highlight the row and make it editable
-function editRow(tableName, rowIndex) {
-    removeEditOrAdd(tableName)
-    let table = $(tableName).DataTable();
-
-    let editData;
-    let headers;
-    let input;
-    if (tableName === '#gate-count-data-table') {
-        editData = gateCountData
-        headers = gateCountHeaders
-    } else if (tableName === '#reference-stats-data-table') {
-        editData = refStats
-        headers = refStatsHeaders
-    }
-
-    sortByIdDescending(editData)
-
-    let scrollPosition = $(tableName).parent().scrollTop();
-    let rowData = {}
-
-    let row = table.row(rowIndex).node()
-
-    row.classList.add('highlighted');
-    const cells = row.querySelectorAll('td');
-
-    // Make each cell in the row editable
-    cells.forEach((cell, index) => {
-        const originalText = index === 1 ? convertTo24HourFormat(cell.textContent) : cell.textContent;
-
-        const originalWidth = cell.offsetWidth - 30; // Get the current column width
-        if(tableName == "#gate-count-data-table"){
-              if (index == 1 || index == 2 || index == 5 || index == 9) { // Skip the last column (buttons column)
-                // Create an input field with the same width as the column
-                input = index === 1
-                    ? `<input type="datetime-local" value="${originalText}" class="form-control" style="width: ${originalWidth}px !important;" />`
-                    : `<input type="text" value="${originalText}" class="form-control" style="width: ${originalWidth}px !important;" />`;
-                cell.innerHTML = input;
-
-              }
-        } else if(tableName == '#reference-stats-data-table') {
-              // Generate options based on the index
-              let options = '';
-              if (index == 3) {
-                options = generateOptions(originalText, typeOfInquiry);
-              } else if (index == 4) {
-                options = generateOptions(originalText, typeOfReference);
-              } else if (index == 5) {
-                options = generateOptions(originalText, typeOfFacilitativeInquiry);
-              } else if (index == 6) {
-                options = generateOptions(originalText, typeOfDigitalSupportInquiry);
-              } else if (index == 7) {
-                options = generateOptions(originalText, technologyType);
-              }
-
-              if (index == 3 || index == 4 || index == 5 || index == 6 || index == 7) {
-                  input = `<select class="form-control" style="width: ${originalWidth}px !important;" >
-                             ${options}
-                           </select>`;
-                  cell.innerHTML = input;
-              }
-        }
-    });
-
-    // Add a Save button to the row for saving changes
-    const saveButtonHtml = `
-        <div>
-            <button style="margin: 3px" class='btn btn-success' onclick='saveRow(this,${JSON.stringify(rowData)}, ${JSON.stringify(tableName)})'><i class='fas fa-check'></i></button>
-            <button style="margin: 3px" class='btn btn-secondary' id="cancelButton" onclick='cancelEdit(${JSON.stringify(tableName)})'>
-                  <i class='fas fa-times'></i>
-            </button>
-        </div>
-        `;
-
-    editing = true
-    row.querySelector('td:last-child').innerHTML = saveButtonHtml;
-    $(tableName).parent().scrollTop(scrollPosition);
-}
-
-// Function to generate options with a placeholder
-function generateOptions(originalText, optionsArray) {
-  return `
-    <option value="" ${!originalText ? 'selected' : ''}></option>
-  ` + optionsArray.map(option =>
-    `<option value="${option}" ${originalText === option ? 'selected' : ''}>${option}</option>`
-  ).join('');
-}
-
-function addRow(tableName, rowIndex) {
-    removeEditOrAdd(tableName)
-    sortByIdDescending(gateCountData)
-    let table = $(tableName).DataTable();
-
-    let scrollPosition = $(tableName).parent().scrollTop();
-    rowData = table.row(rowIndex).data()
-
-    let emptyRow ={
-        "Submission ID": rowData["Submission ID"]+0.1,
-        "Submitted": convertTo24HourFormat("2025-01-01, 12:00:00 a.m."),
-        "Gate Count:": 0,
-        "Gate Count - Daily Total": "",
-        "Gate Count - Unique Head Count": "",
-        "Computer Lab": 0,
-        "Computer Lab - Daily Total": "",
-        "Computer Lab - Unique Head Count": "",
-        "Subject(s) of Inquiry:": "",
-        "Additional Information:": ""
-    };
-
-    // Add the new row
-    var newRow = table.row.add(emptyRow).draw().node();
-
-    // Insert the new row before the target row (rowIndex)
-    var targetRow = table.row(rowIndex).node();
-    var editRow = targetRow.nextSibling
-    editRow.classList.add('highlighted');
-
-    //Make each cell in the row editable
-    const cells = editRow.querySelectorAll('td');
-
-    cells.forEach((cell, index) => {
-        if (index == 1 || index == 2 || index == 5 || index == 9) { // Skip the last column (buttons column)
-            const originalText = cell.textContent;
-            const originalWidth = cell.offsetWidth - 30; // Get the current column width
-
-            // Create an input field with the same width as the column
-            const input = index === 1
-            ? `<input type="datetime-local" value="${originalText}" class="form-control" style="width: ${originalWidth}px !important;" />`
-            : `<input type="text" value="${originalText}" class="form-control" style="width: ${originalWidth}px !important;" />`;
-            cell.innerHTML = input;
-        }
-    });
-
-    // Add a Save button to the row for saving changes
-    const saveButtonHtml = `
-        <button class='btn btn-success' onclick='saveRow(this,${JSON.stringify(emptyRow)}, ${JSON.stringify(tableName)})'><i class='fas fa-check'></i></button>
-        <button class='btn btn-secondary' onclick='deleteRow(true, ${JSON.stringify(tableName)})'>
-        <i class='fas fa-times'></i>
-        </button>
-    `;
-    adding = true
-    editRow.querySelector('td:last-child').innerHTML = saveButtonHtml;
-    targetRow.parentNode.insertBefore(newRow, editRow);  // Insert before the target row
-    $(tableName).parent().scrollTop(scrollPosition);
-}
-
-// Function to remove highlight and save edited values (this can be triggered when you want to save the edits)
-function saveRow(button, rowData, tableName) {
-    let saveData;
-    let headers;
-
-    if (tableName === '#gate-count-data-table') {
-        saveData = gateCountData
-        headers = gateCountHeaders
-    } else if (tableName === '#reference-stats-data-table') {
-        saveData = refStats
-        headers = refStatsHeaders
-    }
-
-    sortByIdDescending(saveData)
-    let scrollPosition = $(tableName).parent().scrollTop();
-
-    const row = button.closest('tr');
-
-    // Remove the highlight class
-    row.classList.remove('highlighted');
-
-    // Get all cells in the row
-    const cells = row.querySelectorAll('td');
-
-    let submissionId = Number(cells[0].innerText);
-
-    // Loop through the cells and extract the values
-    cells.forEach((cell, index) => {
-        if (index !== cells.length - 1) { // Skip the last column (buttons column)
-            let input;
-
-            if (tableName === '#gate-count-data-table')
-                input = index === 1 ? cell.querySelector('.form-control') : cell.querySelector('input'); // Get the input element
-            else if (tableName === '#reference-stats-data-table') input = cell.querySelector('select')
-
-            if (input) {
-                const columnName = headers[index]; // Get column name (assuming tableColumns array contains column names)
-                // Map the input values to the corresponding properties
-                switch (columnName) {
-                    case "Type of Inquiry:":
-                        rowData["Type of Inquiry:"] = input.value;
-                        break;
-                    case "Type of Reference:":
-                        rowData["Type of Reference:"] = input.value;
-                        break;
-                    case "Type of Facilitative Inquiry:":
-                        rowData["Type of Facilitative Inquiry:"] = input.value;
-                        break;
-                    case "Type of  Digital Support Inquiry:":
-                        rowData["Type of  Digital Support Inquiry:"] = input.value;
-                        break;
-                    case "Technology Item Type:":
-                        rowData["Technology Item Type:"] = input.value;
-                        break;
-                    case "Submitted":
-                        rowData["Submitted"] = convertTo12HourFormat(input.value);
-                        break;
-                    case "Gate Count:":
-                        rowData["Gate Count:"] = Number(input.value);
-                        break;
-                    case "Computer Lab":
-                        rowData["Computer Lab"] = Number(input.value);
-                        break;
-                    case "Additional Information:":
-                        rowData["Additional Information:"] = input.value;
-                        break;
-                    default:
-                    // If the column is not recognized, just skip it or handle as needed
-                    break;
-                }
-
-                // Replace input field with the updated value in the cell
-                cell.innerHTML = input.value;
-            }
-        }
-    });
-
-    // Find the corresponding row in gateCountData and update it
-    const indexToUpdate = saveData.findIndex(item => item["Submission ID"] === Number(submissionId));
-    if (indexToUpdate !== -1) {
-        // Update the found item with the new rowData values
-        saveData[indexToUpdate] = { ...saveData[indexToUpdate], ...rowData };
-        if (tableName === '#gate-count-data-table' && indexToUpdate > 0) {
-            saveData[indexToUpdate]["Gate Count - Daily Total"] = saveData[indexToUpdate - 1]["Gate Count:"] - saveData[indexToUpdate]["Gate Count:"]
-            if (saveData[indexToUpdate]["Gate Count - Daily Total"] < 0) {
-              saveData[indexToUpdate]["Gate Count - Daily Total"] = saveData[indexToUpdate]["Gate Count:"];
-            }
-            saveData[indexToUpdate]["Gate Count - Unique Head Count"] = saveData[indexToUpdate]["Gate Count - Daily Total"]/2
-
-            saveData[indexToUpdate]["Computer Lab - Daily Total"] = saveData[indexToUpdate - 1]["Computer Lab"] - saveData[indexToUpdate]["Computer Lab"]
-            if (saveData[indexToUpdate]["Computer Lab - Daily Total"] < 0) {
-              saveData[indexToUpdate]["Computer Lab - Daily Total"] = saveData[indexToUpdate - 1]["Computer Lab"];
-            }
-            saveData[indexToUpdate]["Computer Lab - Unique Head Count"] = saveData[indexToUpdate]["Computer Lab - Daily Total"]/2
-
-            saveData[indexToUpdate+1]["Gate Count - Daily Total"] = rowData["Gate Count:"] - saveData[indexToUpdate+1]["Gate Count:"]
-            if (saveData[indexToUpdate+1]["Gate Count - Daily Total"] < 0) {
-              saveData[indexToUpdate+1]["Gate Count - Daily Total"] = rowData["Gate Count:"];
-            }
-            saveData[indexToUpdate+1]["Gate Count - Unique Head Count"] = saveData[indexToUpdate+1]["Gate Count - Daily Total"]/2
-
-            saveData[indexToUpdate+1]["Computer Lab - Daily Total"] = rowData["Computer Lab"] - saveData[indexToUpdate+1]["Computer Lab"]
-            if (saveData[indexToUpdate+1]["Computer Lab - Daily Total"] < 0) {
-              saveData[indexToUpdate+1]["Computer Lab - Daily Total"] = rowData["Computer Lab"];
-            }
-            saveData[indexToUpdate+1]["Computer Lab - Unique Head Count"] = saveData[indexToUpdate+1]["Computer Lab - Daily Total"]/2
-        }
-    } else {
-        // Find the position to insert the new element
-        for (let i = 0; i < gateCountData.length - 1; i++) {
-            if (saveData[i]["Submission ID"] > submissionId && saveData[i + 1]["Submission ID"] < submissionId) {
-                rowData["Gate Count - Daily Total"] = saveData[i]["Gate Count:"] - rowData["Gate Count:"]
-                // If the "Gate Count - Daily Total" is negative, assign the value from the row data's "Gate Count:"
-                if (rowData["Gate Count - Daily Total"] < 0) {
-                  rowData["Gate Count - Daily Total"] = saveData[i]["Gate Count:"];
-                }
-                rowData["Gate Count - Unique Head Count"] = rowData["Gate Count - Daily Total"]/2
-
-                rowData["Computer Lab - Daily Total"] = saveData[i]["Computer Lab"] - rowData["Computer Lab"]
-                if (rowData["Computer Lab - Daily Total"] < 0) {
-                  rowData["Computer Lab - Daily Total"] = saveData[i]["Computer Lab"];
-                }
-                rowData["Computer Lab - Unique Head Count"] = rowData["Computer Lab - Daily Total"]/2
-
-
-                saveData[i+1]["Gate Count - Daily Total"] = rowData["Gate Count:"] - saveData[i+1]["Gate Count:"]
-                if (saveData[i+1]["Gate Count - Daily Total"] < 0) {
-                  saveData[i+1]["Gate Count - Daily Total"] = rowData["Gate Count:"];
-                }
-                saveData[i+1]["Gate Count - Unique Head Count"] = saveData[i+1]["Gate Count - Daily Total"]/2
-
-                saveData[i+1]["Computer Lab - Daily Total"] = rowData["Computer Lab"] - saveData[i+1]["Computer Lab"]
-                if (saveData[i+1]["Computer Lab - Daily Total"] < 0) {
-                  saveData[i+1]["Computer Lab - Daily Total"] = rowData["Computer Lab"];
-                }
-                saveData[i+1]["Computer Lab - Unique Head Count"] = saveData[i+1]["Computer Lab - Daily Total"]/2
-                saveData.splice(i + 1, 0, rowData);  // Insert the new element between i and i+1
-                break;
-            }
-        }
-    }
-    createTable(headers, saveData, tableName);
-    $(tableName).parent().scrollTop(scrollPosition);
-
-    if (tableName === '#gate-count-data-table') calculateTotals();
-    else if(tableName === '#reference-stats-data-table') calculateReference();
-}
-
-// Function to cancel editing and revert the changes
-function cancelEdit(tableName) {
-    let cancelData;
-    let headers;
-
-    if (tableName === '#gate-count-data-table') {
-        cancelData = gateCountData
-        headers = gateCountHeaders
-    } else if (tableName === '#reference-stats-data-table') {
-        cancelData = refStats
-        headers = refStatsHeaders
-    }
-
-    sortByIdDescending(cancelData)
-    let scrollPosition = $(tableName).parent().scrollTop();
-
-    const rows = document.querySelectorAll('tr');
-    rows.forEach(row => row.classList.remove('highlighted'));
-
-    createTable(headers, cancelData, tableName);
-    $(tableName).parent().scrollTop(scrollPosition);
 }
 
 function convertTo24HourFormat(dateString) {
@@ -818,75 +339,6 @@ function convertTo12HourFormat(datetime) {
     // Combine date and formatted time
     return `${date}, ${formattedTime}`;
   }
-
-function calculateTotals() {
-    totalGateCount = 0;
-    totalComputerLab = 0;
-
-    if(document.getElementById("gateCountTab").classList.contains("active")) {
-        // Loop through each item and accumulate the cost and profit
-        gateCountData.forEach(item => {
-            totalGateCount = Number(totalGateCount) + Number(item["Gate Count - Unique Head Count"]);   // Sum the cost
-            totalComputerLab = Number(totalComputerLab) + Number(item["Computer Lab - Unique Head Count"]); // Sum the profit
-        });
-
-        document.getElementById('gateNumber').innerHTML = rollNumber("gateNumber", totalGateCount);
-        document.getElementById('computerNumber').innerHTML = rollNumber("computerNumber", totalComputerLab);
-
-        totalDays = document.getElementById('total-days').value;
-        lastYear = document.getElementById('last-year').value;
-        totalGateCountAverage = (totalGateCount/totalDays).toFixed(2)
-        totalLabAverage = (totalComputerLab/totalDays).toFixed(2)
-
-        document.getElementById('gate-count-average').innerHTML =
-            `<span class="number input"> ${(!isFinite(totalGateCountAverage) || isNaN(totalGateCountAverage)) ? "0" : totalGateCountAverage}</span>`;
-        document.getElementById('computer-lab-average').innerHTML =
-            `<span class="number input">  ${(!isFinite(totalLabAverage) || isNaN(totalLabAverage)) ? "0" : totalLabAverage}</span>`;
-
-        let changePercentage = (((totalGateCount/lastYear)-1)*100).toFixed(2)
-        changeText = `${(!isFinite(changePercentage) || isNaN(changePercentage)) ? "0" : Math.abs(changePercentage)}%` +
-                     (lastYear > 0 ? ` ${changePercentage < 0 ? changeColor('decrease') : changeColor('increase')}` : '');
-        document.getElementById('overallCount').innerHTML = changeText;
-    }
-}
-
-function changeColor(status) {
-    let card = document.getElementById("changeCard")
-    if (status === 'decrease') { // warm green (#4CAF50)
-        card.style.backgroundColor = '#F44336'; // warm red (#F44336)
-    } else {
-        card.style.backgroundColor = '#4CAF50'; // warm green (#4CAF50)
-    }
-    return status
-}
-
-function rollNumber(elementId, targetNumber) {
-    //const cards = document.querySelectorAll('.card');
-    //cards.forEach(card => {
-        const numberElement = document.getElementById(elementId);
-
-        // Add the slot rolling class to trigger the animation
-        void numberElement.offsetWidth; // Trigger reflow to restart animation
-
-        // Function to simulate the slot machine effect
-        let counter = 0;
-        const rollInterval = setInterval(() => {
-            // Randomize a number between 1 and 100
-            numberElement.textContent = targetNumber;
-            counter++;
-
-            // After showing numbers for a set number of intervals, stop the slot machine
-            if (counter >= 10) { // Number of "spins" before stopping
-                clearInterval(rollInterval);
-
-                // Show the final random number after stopping
-                const randomNumber = targetNumber;
-                numberElement.textContent = randomNumber;
-            }
-        }, 50); // Interval between number changes (100ms for fast "spinning")
-    //});
-    return targetNumber
-}
 
 function exportReport() {
     sortByIdAscending(gateCountData)
@@ -1368,11 +820,6 @@ function sortByIdDescending(data) {
     return data.sort((a, b) => b["Submission ID"] - a["Submission ID"]);
 }
 
-// Function to trigger the file input dialog
-/*function triggerFileInput() {
-    document.getElementById("excel-upload").click();
-}*/
-
 // Function to toggle the active class when a tab is clicked
 function setActiveTab(selectedTab) {
     if(!selectedTab.classList.contains("active")) {
@@ -1387,29 +834,11 @@ function setActiveTab(selectedTab) {
                 headers = ["Type", "Inquiry"],
                 data = distinctiveInquiryData
                 break;
-            case 'KC Library Ref Stats':
-                fileToLoad = "modules/reference-stats-module.html";
-                headers = refStatsHeaders
-                data = refStats
-                tableName = "#reference-stats-data-table"
-                break;
-            case 'Gate Count':
-                fileToLoad = "modules/gate-count-module.html";
-                headers = gateCountHeaders
-                data = gateCountData
-                tableName = "#gate-count-data-table"
-                break;
             case 'Roving Count':
                 fileToLoad = "modules/roving-count-module.html";
                 headers = rovingHeaders
                 data = rovingData
                 tableName = "#roving-data-table"
-                break;
-            case 'module4':
-                content = "<h2>Module 4 Content</h2><p>This is the content for Module 4.</p>";
-                break;
-            case 'module5':
-                content = "<h2>Module 5 Content</h2><p>This is the content for Module 5.</p>";
                 break;
             default:
                 break;
@@ -1438,15 +867,8 @@ function setActiveTab(selectedTab) {
 
         setTimeout(function () {
             createTable(headers, data, tableName);
-            if(selectedTab.innerText === "Dashboard") {
-                loadDashBoard()
-            } else {
-
-                if(selectedTab.innerText == "Gate Count") initializeGateCountPage()
-                else if (selectedTab.innerText == "Roving Count") initializeRovingCountPage()
-                else if(selectedTab.innerText == "KC Library Ref Stats") calculateReference()
-            }
-
+            if(selectedTab.innerText === "Dashboard") loadDashBoard()
+            else if (selectedTab.innerText == "Roving Count") initializeRovingCountPage()
         }, 100)
         // Remove active class from all tabs
         const tabs = document.querySelectorAll('.side-tab ul li');
@@ -1456,12 +878,10 @@ function setActiveTab(selectedTab) {
 
         // Add active class to the clicked tab
         selectedTab.classList.add('active');
-
     }
 }
 
 function loadDashBoard() {
-
     let chartData = [];
     chartData = filterData("Type of Facilitative Inquiry:", typeOfFacilitativeInquiry.concat("Other"))
     loadCharts("facilitative-chart", chartData)
@@ -1479,12 +899,6 @@ function loadDashBoard() {
 }
 
 function filterData(key, items) {
-    // Step 1: Calculate the total count of all items
-    /*const totalCount = items.reduce((total, item) => {
-        return total + refStats.filter(record => record[key] === item).length;
-    }, 0);*/
-
-    // Step 2: Calculate individual counts and adjust them as percentages of the total
     return items.map(item => {
         let count = refStats.filter(record => {
                       if (key === "Student's Program") {
@@ -1507,16 +921,6 @@ function filterData(key, items) {
     });
 }
 
-function initializeGateCountPage() {
-    if (document.getElementById('total-days') && document.getElementById('last-year') && document.getElementById('input1') && document.getElementById('input2')) {
-        document.getElementById('total-days').value = totalDays;
-        document.getElementById('last-year').value = lastYear;
-        document.getElementById('input1').value = addedGateCount
-        document.getElementById('input2').value = addedComputerLab
-        calculateTotals()
-    } //else initializeGateCountPage()
-}
-
 function initializeRovingCountPage() {
     if (document.getElementById("study-room-chart") &&
         document.getElementById("group-table-chart") &&
@@ -1528,7 +932,7 @@ function initializeRovingCountPage() {
         generateTable("group-table-chart", groupTablesAvgHeadCounts);
         generateTable("study-carrel-chart", studyCarrelsAvgHeadCounts);
         generateTable("computer-lab-chart", computerLabAvgHeadCounts);
-    } //else initializeRovingCountPage()
+    }
 
 }
 
@@ -1541,17 +945,6 @@ document.querySelectorAll('.side-tab ul li').forEach(tab => {
     });
 });
 
-function removeEditOrAdd(tableName) {
-   if (adding) {
-        deleteRow(true, tableName)
-        adding = false
-   } else if (editing) {
-        cancelEdit(tableName)
-        editing = false
-   }
-}
-const mainData = [];
-
 function groupRovingData() {
     if (rovingData && rovingData.length > 0) {
        rovingData.forEach(item => {
@@ -1562,15 +955,6 @@ function groupRovingData() {
        separateHeadCounts(calculateHeadCountByDay())
    }
 }
-
-let computerLabHeadCount = [];
-let groupTablesHeadCount = [];
-let studyCarrelsHeadCount = [];
-let studyRoomHeadCount = [];
-let computerLabAvgHeadCounts = [];
-let groupTablesAvgHeadCounts = [];
-let studyCarrelsAvgHeadCounts = [];
-let studyRoomAvgHeadCounts = [];
 
 function getMin(data) {
     // Ensure data is not empty
@@ -1857,94 +1241,6 @@ function generateTable(tableName, tableData) {
     }
 }
 
-function calculateReference() {
-        if (document.getElementById("chat-count") && refStats) {
-            document.getElementById("chat-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Chat").length;
-            document.getElementById("in-person-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "In Person").length;
-            document.getElementById("phone-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Phone").length;
-            document.getElementById("email-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Email").length;
-            document.getElementById("form-submission-count").innerText = refStats.filter(record => record["Method of Inquiry:"] === "Form Submission").length;
-
-            document.getElementById("general-library-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "General Library Information (e.g. hours, borrowing period, etc.)").length;
-            document.getElementById("library-account-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Library Account (e.g. pin, renewals, fines, etc.)").length;
-            document.getElementById("referral-external-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Referral/Directional (External - Bookstore, Registrar, Academic Success Centre, etc.)").length;
-            document.getElementById("referral-internal-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Referral/Directional (In Library - BAL, Copyright, EdTech, Instruction, etc.)").length;
-            document.getElementById("community-user-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Community User").length;
-            document.getElementById("supplies-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Supplies (e.g. stapler, pen, hole punch, etc.)").length;
-            document.getElementById("study-room-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Study Room").length;
-            document.getElementById("accessible-format-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Accessible Format Request").length;
-            document.getElementById("reserve-request-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Reserve Request").length;
-            document.getElementById("scan-on-demand-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Scan-On-Demand").length;
-            document.getElementById("inter-library-count").innerText = refStats.filter(record => record["Type of Facilitative Inquiry:"] === "Interlibrary Loans/Requests/Holds").length;
-            document.getElementById("facilitative-other-count").innerText = refStats.filter(record =>
-                record["Type of Inquiry:"] === "Facilitative" && record["Type of Facilitative Inquiry:"] === "Other").length;
-
-            document.getElementById("loanable-tech-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Loanable Tech").length;
-            document.getElementById("digital-support-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Digital Support").length;
-            document.getElementById("basic-reference-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Basic Reference").length;
-            document.getElementById("complex-reference-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Complex Reference").length;
-            document.getElementById("facilitative-count").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Facilitative").length;
-
-            document.getElementById("document-assistance-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Document Assistance (e.g. Microsoft Word, Excel, PDF, Google Docs, etc.)").length;
-            document.getElementById("internet-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Internet/Wifi Connectivity").length;
-            document.getElementById("keyano-account-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Keyano Account Access (e.g. Webmail, Moodle, or Self-Service)").length;
-            document.getElementById("lms-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "LMS (Moodle. McGraw, MyLAB IT)", "Online Navigation (e.g. opening a browser or searching in Google)").length;
-            document.getElementById("print-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Print/Scan/Copy Assistance or Troubleshooting").length;
-            document.getElementById("software-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Software (M365, Respondus, Safe Exam, etc.)").length;
-            document.getElementById("online-navigation-count").innerText = refStats.filter(record => record["Type of  Digital Support Inquiry:"] === "Online Navigation (e.g. opening a browser or searching in Google)").length;
-            document.getElementById("digital-support-other-count").innerText = refStats.filter(record =>
-               record["Type of Inquiry:"] === "Digital Support" && record["Type of  Digital Support Inquiry:"] === "Other").length;
-
-            document.getElementById("citation-help-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Citation Help").length;
-            document.getElementById("find-resource-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Find a Resource (print or online)").length;
-            document.getElementById("database-help-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Database Help").length;
-            document.getElementById("copyright-count").innerText = refStats.filter(record => record["Type of Reference:"] === "Copyright").length;
-            document.getElementById("reference-other-count").innerText = refStats.filter(record =>
-                   (record["Type of Inquiry:"] === "Basic Reference" || record["Type of Inquiry:"] === "Complex Reference") && record["Type of Reference:"] === "Other").length;
-
-            document.getElementById("calculator-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Calculator").length;
-            document.getElementById("camera-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Camera").length;
-            document.getElementById("charger-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Charger, Adapter, etc.").length;
-            document.getElementById("chromebook-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Chromebooks").length;
-            document.getElementById("chromecast-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Chromecast").length;
-            document.getElementById("dvd-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "DVD Player").length;
-            document.getElementById("headphones-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Headphones").length;
-            document.getElementById("keyboard-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Keyboard").length;
-            document.getElementById("laptops-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Laptops").length;
-            document.getElementById("mfa-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "MFA Token").length;
-            document.getElementById("power-bank-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Power Bank").length;
-            document.getElementById("projector-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "Projector").length;
-            document.getElementById("sad-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "SAD Light").length;
-            document.getElementById("webcam-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "WebCam").length;
-            document.getElementById("mouse-count").innerText = refStats.filter(record => record["Technology Item Type:"] === "WIreless Mouse").length;
-
-            document.getElementById("available-laptop-count").innerText = refStats.filter(record =>
-                    record["Technology Item Type:"] === "Laptops" && record["Was Tech available at the time of request?"] === "Yes").length;
-            document.getElementById("unavailable-laptop-count").innerText = refStats.filter(record =>
-                    record["Technology Item Type:"] === "Laptops" && record["Was Tech available at the time of request?"] === "No").length;
-
-            document.getElementById("method-inquiry-total").innerText = refStats.filter(record =>
-                    methodOfInquiry.includes(record["Method of Inquiry:"])).length;
-            document.getElementById("type-inquiry-total").innerText = refStats.filter(record =>
-                    typeOfInquiry.includes(record["Type of Inquiry:"])).length;
-            document.getElementById("reference-inquiry-total").innerText = refStats.filter(record =>
-                    typeOfReference.includes(record["Type of Reference:"])).length + refStats.filter(record =>
-                    (record["Type of Inquiry:"] === "Basic Reference" || record["Type of Inquiry:"] === "Complex Reference") && record["Type of Reference:"] === "Other").length;
-
-            document.getElementById("facilitative-inquiry-total").innerText = refStats.filter(record =>
-                    typeOfFacilitativeInquiry.includes(record["Type of Facilitative Inquiry:"])).length + refStats.filter(record =>
-                    record["Type of Inquiry:"] === "Facilitative" && record["Type of Facilitative Inquiry:"] === "Other").length;
-
-            document.getElementById("digital-inquiry-total").innerText = refStats.filter(record =>
-                    typeOfDigitalSupportInquiry.includes(record["Type of  Digital Support Inquiry:"])).length + refStats.filter(record =>
-                    record["Type of Inquiry:"] === "Digital Support" && record["Type of  Digital Support Inquiry:"] === "Other").length;
-
-            document.getElementById("loanable-tech-total").innerText = refStats.filter(record => record["Type of Inquiry:"] === "Loanable Tech").length;
-            document.getElementById("laptop-total").innerText = refStats.filter(record => record["Technology Item Type:"] === "Laptops").length;
-        } //else calculateReference()
-
-}
-
 function splitRecord(record) {
   let splitRecords = [record]; // Start with the original record
 
@@ -2042,7 +1338,6 @@ function loadCharts(chartName, keys) {
                 borderWidth: 1
             }]
         };
-
 
         // Configuration for the chart
         let config = {
@@ -2278,6 +1573,16 @@ function submitFile() {
 
 // Event listener for file selection (optional)
 document.getElementById("file-input").addEventListener('change', handleFileUpload);
+
+let mainData = [];
+let computerLabHeadCount = [];
+let groupTablesHeadCount = [];
+let studyCarrelsHeadCount = [];
+let studyRoomHeadCount = [];
+let computerLabAvgHeadCounts = [];
+let groupTablesAvgHeadCounts = [];
+let studyCarrelsAvgHeadCounts = [];
+let studyRoomAvgHeadCounts = [];
 
 let refStatsHeaders = ['Submission ID', 'Submitted', 'Method of Inquiry:', 'Type of Inquiry:', 'Type of Reference:', 'Type of Facilitative Inquiry:',
                 'Type of  Digital Support Inquiry:', 'Technology Item Type:', 'Software/Application Type:', "Student's Program", 'Year of Program',
