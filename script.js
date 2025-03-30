@@ -340,6 +340,23 @@ function convertTo12HourFormat(datetime) {
     return `${date}, ${formattedTime}`;
   }
 
+function convertDateFormat(dateStr) {
+
+    // Remove the comma and trim any extra spaces
+    dateStr = dateStr.replace(',', '').trim();
+
+    // Split the string into date and time parts
+    let [datePart, timePart, ampm] = dateStr.split(' ');
+    // Convert the AM/PM part to uppercase
+    ampm = ampm.toUpperCase().replace(/\./g, ''); ;
+
+    // Reassemble the date and time in the desired format
+    const newFormat = `${datePart} ${timePart} ${ampm}`;
+
+    return newFormat;
+}
+
+
 function exportReport() {
     sortByIdAscending(gateCountData)
     sortByIdAscending(rovingData)
@@ -699,7 +716,25 @@ function exportReport() {
             cell.alignment.wrapText = true; // Enable text wrapping
         });
 
+        const numRows = sheet.rowCount; // Get the number of rows in the sheet
 
+         // Loop through all rows, starting from row 2 (skip header)
+         for (let rowNum = 2; rowNum <= numRows; rowNum++) {
+             const cell = sheet.getCell(rowNum, 1); // Get cell in the first column of the current row
+
+             // Check if the cell value is a string (date in string format)
+             //if (cell.value && (cell.value.includes("a.m.") || cell.value.includes("p.m."))) {
+             if(cell.value && typeof cell.value === 'string' && (cell.value.includes("a.m.") || cell.value.includes("p.m."))) {
+                 // Try to parse the string into a Date object
+                const parsedDate = new Date(convertDateFormat(cell.value));
+                if (!isNaN(parsedDate.getTime())) { // Ensure it's a valid Date
+                     parsedDate.setHours(parsedDate.getHours() - 7);
+                     cell.value = parsedDate // Set the cell value to the Date object
+                     //console.log(cell.value)
+                     cell.numFmt = 'yyyy-mm-dd h:mm'; // Apply custom date format
+                 }
+             }
+         }
 
         // Freeze the top row (header)
         sheet.views = [
