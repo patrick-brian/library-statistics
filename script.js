@@ -252,6 +252,7 @@ function createTable(headers, data, tableName){
 function convertExcelDates(list) {
   return list.map(item => {
     // Convert each item's excelDate and add it as a readable date
+
     item[0] = localizedDate(excelDateToJSDate(item[0]));
     item[15] !== undefined && (item[15] = localizedDate(excelDateToJSDate(item[15])));
     return item;
@@ -260,7 +261,17 @@ function convertExcelDates(list) {
 
 function excelDateToJSDate(excelDate) {
   const epoch = new Date(1899, 11, 30); // Excel's epoch date (Dec 30, 1899)
-  return new Date(epoch.getTime() + excelDate * 86399956.66); // Multiply by 86400000 to convert to milliseconds
+
+    // Convert Excel date to milliseconds (Excel uses a float)
+    const jsDate = new Date(epoch.getTime() + excelDate *  86399956.66); // Multiply by 86400000 to convert to milliseconds
+
+    // Get the time zone offset for the date, considering DST
+    const timeZoneOffset = jsDate.getTimezoneOffset() / 60; // In hours, positive for behind UTC, negative for ahead of UTC
+
+    // If the offset is -6, adjust for -6 (DST)
+    if (timeZoneOffset === 6) jsDate.setHours(jsDate.getHours() - 1); // Daylight Saving Time (UTC-6)
+
+    return jsDate;
 }
 
 function localizedDate(dateStr) {
@@ -730,7 +741,7 @@ function exportReport() {
                 if (!isNaN(parsedDate.getTime())) { // Ensure it's a valid Date
                      parsedDate.setHours(parsedDate.getHours() - 7);
                      cell.value = parsedDate // Set the cell value to the Date object
-                     //console.log(cell.value)
+
                      cell.numFmt = 'yyyy-mm-dd h:mm'; // Apply custom date format
                  }
              }
@@ -983,9 +994,12 @@ document.querySelectorAll('.side-tab ul li').forEach(tab => {
 function groupRovingData() {
     if (rovingData && rovingData.length > 0) {
        rovingData.forEach(item => {
-           item["Roving Time"] = item["Roving Time"] && item["Roving Time"].trim() !== ""
+           /*item["Roving Time"] = item["Roving Time"] && item["Roving Time"].trim() !== ""
                ? roundToNearestHalfHour(item["Roving Time"])
-               : roundToNearestHalfHour(item["Submitted"]) ; // Assign an empty string if Submitted is undefined or an empty string
+               : roundToNearestHalfHour(item["Submitted"]) ; // Assign an empty string if Submitted is undefined or an empty string*/
+
+           item["Roving Time"] = roundToNearestHalfHour(item["Submitted"])
+
        });
        separateHeadCounts(calculateHeadCountByDay())
    }
