@@ -739,7 +739,12 @@ function exportReport() {
                  // Try to parse the string into a Date object
                 const parsedDate = new Date(convertDateFormat(cell.value));
                 if (!isNaN(parsedDate.getTime())) { // Ensure it's a valid Date
-                     parsedDate.setHours(parsedDate.getHours() - 7);
+		     const timeZoneOffset = parsedDate.getTimezoneOffset() / 60; 
+		     if (timeZoneOffset === 7) { 
+			parsedDate.setHours(parsedDate.getHours() - 1); // Adjust for DST
+        	     }
+                     parsedDate.setHours(parsedDate.getHours() - 6);
+			 
                      cell.value = parsedDate // Set the cell value to the Date object
 
                      cell.numFmt = 'yyyy-mm-dd h:mm'; // Apply custom date format
