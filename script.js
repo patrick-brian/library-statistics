@@ -941,7 +941,6 @@ function loadDashBoard() {
     availabilityChart("availability-chart", chartData)
     chartData = filterData("Student's Program", programs)
     loadCharts("patron-program-chart", chartData)
-
 }
 
 function filterData(key, items) {
