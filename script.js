@@ -177,7 +177,6 @@ function loadFile(file) {
 }
 
 function correctTime(input) {
-    console.log(input)
   // Split the input into date and time parts
   let [datePart, timePart] = input.split(',').map(str => str.trim());
 
@@ -206,7 +205,7 @@ function correctTime(input) {
   let meridiem = originalDate.getHours() >= 12 ? 'p.m.' : 'a.m.';
 
   let fixedTime = `${datePart}, ${correctedHours}:${correctedMinutes}:${correctedSeconds} ${meridiem}`
-    console.log("after = " + fixedTime)
+
   return fixedTime;
 }
 
@@ -1383,7 +1382,7 @@ function processRecords(records) {
                 if(fieldValue === "") record[fieldName] = 0
             }
             else if (record["Type of Inquiry:"] === inquiry && !validList.includes(fieldValue)) {
-                record["Additional Information:"] = (record["Additional Information:"] || "") + " " + fieldValue;
+                record["Additional Information:"] = fieldValue + "; " + (record["Additional Information:"] || "");
                 record[fieldName] = "Other";
             }
         }
