@@ -116,6 +116,16 @@ function loadFile(file) {
 			   item["Type of Inquiry:"] == "Roving"
 			)
 
+			rovingData.forEach(item => {
+               item["Roving Time"] = item["Roving Time"] && item["Roving Time"].trim() !== ""
+                   ? correctTime(roundToNearestHalfHour(item["Roving Time"]))
+                   : roundToNearestHalfHour(item["Submitted"]) ; // Assign an empty string if Submitted is undefined or an empty string
+
+               //item["Roving Time"] = roundToNearestHalfHour(item["Submitted"])
+            });
+
+            console.log(rovingData)
+
 			loanableTechData = newData.filter(item =>
 			   item["Type of Inquiry:"] == "Loanable Tech"
 			)
@@ -164,6 +174,40 @@ function loadFile(file) {
         };
         reader.readAsBinaryString(file);
     }
+}
+
+function correctTime(input) {
+    console.log(input)
+  // Split the input into date and time parts
+  let [datePart, timePart] = input.split(',').map(str => str.trim());
+
+  // Convert to 24-hour format using Date
+  let originalDate = new Date(`${datePart} ${timePart.replace(/\./g, '')}`);
+
+  // Get hours and minutes
+  let hours = originalDate.getHours();
+  let minutes = originalDate.getMinutes();
+
+  // Define the time boundaries
+  const lowerBound = new Date(`${datePart} 07:30`);
+  const upperBound = new Date(`${datePart} 19:30`);
+
+  if (originalDate < lowerBound || originalDate > upperBound) {
+    // If outside the range, add 12 hours (only if it's AM)
+    if (hours < 12) {
+      originalDate.setHours(hours + 12);
+    }
+  }
+
+  // Format back to desired string
+  let correctedHours = originalDate.getHours() % 12 || 12;
+  let correctedMinutes = String(originalDate.getMinutes()).padStart(2, '0');
+  let correctedSeconds = String(originalDate.getSeconds()).padStart(2, '0');
+  let meridiem = originalDate.getHours() >= 12 ? 'p.m.' : 'a.m.';
+
+  let fixedTime = `${datePart}, ${correctedHours}:${correctedMinutes}:${correctedSeconds} ${meridiem}`
+    console.log("after = " + fixedTime)
+  return fixedTime;
 }
 
 // Function to display the JSON data as a list
@@ -965,8 +1009,10 @@ function filterData(key, items) {
             notAvailable = refStats.filter(record => record[key] === item && record["Was Tech available at the time of request?"] === "No").length
         }
         //const percentage = totalCount > 0 ? (count / totalCount) * 100 : 0;  // Prevent division by zero
+        //(((count-available)/count) * 100).toFixed(1)
+        let availablePercentage = ((available/count) * 100).toFixed(1)
         return {
-            [item]: [count, ((available/count) * 100).toFixed(1), (((count-available)/count) * 100).toFixed(1)]
+            [item]: [count, availablePercentage, (100-availablePercentage).toFixed(1)]
         };
     });
 }
@@ -997,14 +1043,14 @@ document.querySelectorAll('.side-tab ul li').forEach(tab => {
 
 function groupRovingData() {
     if (rovingData && rovingData.length > 0) {
-       rovingData.forEach(item => {
+       /*rovingData.forEach(item => {
            /*item["Roving Time"] = item["Roving Time"] && item["Roving Time"].trim() !== ""
                ? roundToNearestHalfHour(item["Roving Time"])
-               : roundToNearestHalfHour(item["Submitted"]) ; // Assign an empty string if Submitted is undefined or an empty string*/
+               : roundToNearestHalfHour(item["Submitted"]) ; // Assign an empty string if Submitted is undefined or an empty string
 
            item["Roving Time"] = roundToNearestHalfHour(item["Submitted"])
 
-       });
+       });*/
        separateHeadCounts(calculateHeadCountByDay())
    }
 }
@@ -1442,7 +1488,7 @@ function loadCharts(chartName, keys) {
                     datalabels: {
                         color: (context) => {
                             const value = context.dataset.data[context.dataIndex];
-                            return value > 25 ? '#fff' : '#000'; // White font for values > 50%, black for others
+                            return value > 50 ? '#fff' : '#000'; // White font for values > 50%, black for others
                         },
                         font: {
                             weight: "bold",
@@ -1455,21 +1501,21 @@ function loadCharts(chartName, keys) {
                         // Positioning logic for labels based on value
                         anchor: (context) => {
                             const value = context.dataset.data[context.dataIndex];
-                            return value > 25 ? 'center' : 'end'; // 'center' for inside, 'end' for outside
+                            return value > 50 ? 'center' : 'end'; // 'center' for inside, 'end' for outside
                         },
                         align: (context) => {
                             const value = context.dataset.data[context.dataIndex];
-                            return value > 25 ? 'center' : 'start'; // 'center' for inside, 'start' for outside
+                            return value > 50 ? 'center' : 'start'; // 'center' for inside, 'start' for outside
                         },
                         // Adjust label position based on the value (use offset for outside)
                         offset: (context) => {
                             const value = context.dataset.data[context.dataIndex];
-                            return value > 25 ? 0 : -40; // No offset inside, offset 10px outside
+                            return value > 50 ? 0 : -40; // No offset inside, offset 10px outside
                         },
                         // Use position to force the label inside or outside based on the value
                         position: (context) => {
                             const value = context.dataset.data[context.dataIndex];
-                            return value > 25 ? 'inside' : 'outside'; // 'inside' for > 50%, 'outside' for <= 50%
+                            return value > 50 ? 'inside' : 'outside'; // 'inside' for > 50%, 'outside' for <= 50%
                         }
                     }
 
@@ -1543,32 +1589,16 @@ function availabilityChart (chartName, keys) {
                         return `${value}%`; // Display percentage if value is greater than 0
                       }
                       return '';
-                },
-                // Positioning logic for labels based on value
-               /* anchor: (context) => {
-                    const value = context.dataset.data[context.dataIndex];
-                    return value > 25 ? 'center' : 'end'; // 'center' for inside, 'end' for outside
-                },*/
-                /*align: (context) => {
-                    const value = context.dataset.data[context.dataIndex];
-                    return value > 25 ? 'center' : 'start'; // 'center' for inside, 'start' for outside
-                },*/
-                // Adjust label position based on the value (use offset for outside)
-                /*offset: (context) => {
-                    const value = context.dataset.data[context.dataIndex];
-                    return value > 25 ? 0 : -5; // No offset inside, offset 10px outside
-                },*/
-                // Use position to force the label inside or outside based on the value
-                /*position: (context) => {
-                    const value = context.dataset.data[context.dataIndex];
-                    return value > 25 ? 'inside' : 'outside'; // 'inside' for > 50%, 'outside' for <= 50%
-                }*/
+                }
             }
         },
         scales: {
             x: {
                 stacked: true, // Stack bars vertically
                 beginAtZero: true,
+                grid: {
+                    display: false // This removes the y-axis grid lines
+                }
                 //max: 100, // Since it's percentage, the maximum is 100
             },
             y: {
