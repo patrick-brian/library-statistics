@@ -1382,7 +1382,7 @@ function processRecords(records) {
                 if(fieldValue === "") record[fieldName] = 0
             }
             else if (record["Type of Inquiry:"] === inquiry && !validList.includes(fieldValue)) {
-                record["Additional Information:"] = fieldValue + "; " + (record["Additional Information:"] || "");
+                record["Additional Information:"] = (fieldValue ? fieldValue + "; " : "") + (record["Additional Information:"] || "");
                 record[fieldName] = "Other";
             }
         }
